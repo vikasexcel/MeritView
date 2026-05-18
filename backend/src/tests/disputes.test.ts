@@ -162,7 +162,7 @@ describe('GET /v1/disputes/:id', () => {
   })
 
   it('returns 404 for another user', async () => {
-    const otherCookie = await registerAndLogin('other-user@test.meritview')
+    const otherCookie = await registerAndLogin('get-dispute-other@test.meritview')
     const res = await request(app).get(`/v1/disputes/${disputeId}`).set('Cookie', otherCookie)
     expect(res.status).toBe(404)
   })
