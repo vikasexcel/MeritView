@@ -3,3 +3,7 @@ CLIENT.md
 
 # Requirements docs and all nested files
 Requirements/
+
+/generated/prisma
+.claude/
+.env
