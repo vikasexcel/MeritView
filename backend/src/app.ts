@@ -8,6 +8,7 @@ import { errorHandler } from './middleware/errorHandler'
 import healthRouter from './routes/health'
 import disputesRouter from './routes/disputes'
 import invitationsRouter from './routes/invitations'
+import briefsRouter from './routes/briefs'
 import { auth } from './lib/auth'
 
 const app = express()
@@ -24,6 +25,7 @@ app.use(rateLimiter)
 
 app.use('/v1', healthRouter)
 app.use('/v1/disputes', disputesRouter)
+app.use('/v1/disputes/:id/parties/:partyId/brief', briefsRouter)
 app.use('/v1/invitations', invitationsRouter)
 
 app.use(errorHandler)
