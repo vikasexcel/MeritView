@@ -6,6 +6,8 @@ import { corsMiddleware } from './middleware/cors'
 import { rateLimiter } from './middleware/rateLimiter'
 import { errorHandler } from './middleware/errorHandler'
 import healthRouter from './routes/health'
+import disputesRouter from './routes/disputes'
+import invitationsRouter from './routes/invitations'
 import { auth } from './lib/auth'
 
 const app = express()
@@ -21,6 +23,8 @@ app.use(express.urlencoded({ extended: true }))
 app.use(rateLimiter)
 
 app.use('/v1', healthRouter)
+app.use('/v1/disputes', disputesRouter)
+app.use('/v1/invitations', invitationsRouter)
 
 app.use(errorHandler)
 
