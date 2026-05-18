@@ -20,6 +20,13 @@ export async function getPartyForUser(disputeId: string, partyId: string, userId
   })
 }
 
+export async function isDisputeParticipant(disputeId: string, userId: string) {
+  const party = await prisma.party.findFirst({
+    where: { disputeId, userId },
+  })
+  return party !== null
+}
+
 export async function startSession(partyId: string, disputeId: string, llmProvider: string) {
   return prisma.briefPrepSession.create({
     data: { partyId, disputeId, llmProvider, messages: [], status: 'active' },

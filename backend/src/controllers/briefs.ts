@@ -94,8 +94,8 @@ export async function submitBrief(req: Request<BriefParams>, res: Response) {
 export async function getBrief(req: Request<BriefParams>, res: Response) {
   const { id: disputeId, partyId } = req.params
 
-  const party = await briefService.getPartyForUser(disputeId, partyId, req.user!.id)
-  if (!party) {
+  const isParticipant = await briefService.isDisputeParticipant(disputeId, req.user!.id)
+  if (!isParticipant) {
     res.status(403).json({ error: 'forbidden' })
     return
   }
