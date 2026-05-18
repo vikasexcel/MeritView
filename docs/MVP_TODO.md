@@ -44,23 +44,23 @@
 ## Phase 2: Authentication
 
 ### 2.1 Backend Auth (Better Auth)
-- [ ] Install and configure Better Auth
-- [ ] Set up email + password authentication
+- [x] Install and configure Better Auth
+- [x] Set up email + password authentication
 - [ ] Set up Google OAuth
-- [ ] Email verification flow
-- [ ] JWT access tokens (15 min) + refresh tokens (7 days)
+- [x] Email verification flow
+- [x] JWT access tokens (15 min) + refresh tokens (7 days)
 - [ ] Guest/invitation token support
-- [ ] Auth middleware for protected routes
+- [x] Auth middleware for protected routes
 
 ### 2.2 Frontend Auth
-- [ ] Login page (email/password + Google login button)
-- [ ] Register page
-- [ ] Email verification page
-- [ ] Forgot password / reset password pages
-- [ ] Protected route wrapper component
-- [ ] Zustand auth store (user, token, isAuthenticated)
-- [ ] Auto token refresh logic
-- [ ] Logout functionality
+- [x] Login page (email/password)
+- [x] Register page
+- [x] Email verification page
+- [x] Forgot password / reset password pages
+- [x] Protected route wrapper component
+- [x] Zustand auth store (user, token, isAuthenticated)
+- [x] Auto token refresh logic
+- [x] Logout functionality
 
 ---
 
