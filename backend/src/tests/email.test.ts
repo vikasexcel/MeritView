@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
 
 vi.mock('resend', () => {
   const send = vi.fn().mockResolvedValue({ data: { id: 'mock-email-id' }, error: null })
@@ -11,9 +11,12 @@ vi.mock('resend', () => {
 
 import { sendVerificationEmail, sendPasswordResetEmail } from '../lib/email'
 
-// Access the shared mock send fn through the module mock
-const resendMod = await vi.importMock<{ __mockSend: ReturnType<typeof vi.fn> }>('resend')
-const mockSend = resendMod.__mockSend
+let mockSend: ReturnType<typeof vi.fn>
+
+beforeAll(async () => {
+  const resendMod = await vi.importMock<{ __mockSend: ReturnType<typeof vi.fn> }>('resend')
+  mockSend = resendMod.__mockSend
+})
 
 describe('sendVerificationEmail', () => {
   beforeEach(() => mockSend.mockClear())

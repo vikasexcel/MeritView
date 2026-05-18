@@ -32,7 +32,7 @@ export function Register() {
       return
     }
 
-    navigate(`/auth/verify-email?email=${encodeURIComponent(email)}`)
+    navigate('/login')
   }
 
   return (

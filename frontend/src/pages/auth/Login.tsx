@@ -25,11 +25,7 @@ export function Login() {
     setLoading(false)
 
     if (authError) {
-      if (authError.code === 'EMAIL_NOT_VERIFIED') {
-        setError('Please verify your email before signing in. Check your inbox.')
-      } else {
-        setError(authError.message ?? 'Invalid email or password.')
-      }
+      setError(authError.message ?? 'Invalid email or password.')
       return
     }
 
@@ -72,12 +68,7 @@ export function Login() {
             />
           </div>
           <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link to="/auth/forgot-password" className="text-xs text-muted-foreground hover:text-foreground">
-                Forgot password?
-              </Link>
-            </div>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
