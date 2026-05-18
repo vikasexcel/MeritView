@@ -7,3 +7,4 @@ Requirements/
 /generated/prisma
 .claude/
 .env
+.worktrees/
