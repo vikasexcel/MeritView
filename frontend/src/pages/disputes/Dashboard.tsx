@@ -2,10 +2,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { disputeApi, type Dispute } from '@/lib/disputeApi'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const STATE_BADGE: Record<Dispute['state'], { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   draft: { label: 'Draft', variant: 'secondary' },
@@ -27,12 +28,10 @@ export function Dashboard() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">My Disputes</h1>
-        <Button>
-          <Link to="/disputes/new" className="flex items-center">
-            <Plus className="w-4 h-4 mr-2" />
-            New Dispute
-          </Link>
-        </Button>
+        <Link to="/disputes/new" className={cn(buttonVariants(), 'flex items-center gap-2')}>
+          <Plus className="w-4 h-4" />
+          New Dispute
+        </Link>
       </div>
 
       {isLoading && (
@@ -42,9 +41,9 @@ export function Dashboard() {
       {!isLoading && data?.length === 0 && (
         <div className="text-center py-16 space-y-3">
           <p className="text-muted-foreground">You have no disputes yet.</p>
-          <Button variant="outline">
-            <Link to="/disputes/new">Create your first dispute</Link>
-          </Button>
+          <Link to="/disputes/new" className={buttonVariants({ variant: 'outline' })}>
+            Create your first dispute
+          </Link>
         </div>
       )}
 
@@ -66,9 +65,12 @@ export function Dashboard() {
                     {dispute.category.replace('_', ' ')}
                     {dispute.stakes ? ` · $${Number(dispute.stakes).toLocaleString()}` : ''}
                   </span>
-                  <Button size="sm" variant="ghost">
-                    <Link to={`/disputes/${dispute.id}`}>View →</Link>
-                  </Button>
+                  <Link
+                    to={`/disputes/${dispute.id}`}
+                    className={buttonVariants({ variant: 'ghost', size: 'sm' })}
+                  >
+                    View →
+                  </Link>
                 </div>
               </CardContent>
             </Card>
