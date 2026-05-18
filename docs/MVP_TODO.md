@@ -120,28 +120,28 @@
 ## Phase 5: Brief Writing Flow
 
 ### 5.1 Backend — Brief Endpoints
-- [ ] `POST /v1/disputes/:id/parties/:partyId/brief/session` — start AI chat session, return session ID
-- [ ] `PUT /v1/disputes/:id/parties/:partyId/brief/draft` — save draft (multiple times)
-- [ ] `POST /v1/disputes/:id/parties/:partyId/brief/submit` — submit final brief (immutable), trigger evaluation if both submitted
-- [ ] `GET /v1/disputes/:id/parties/:partyId/brief` — get brief (own only until both submitted)
-- [ ] Data isolation enforcement — party A cannot read party B's brief until both sealed
+- [x] `POST /v1/disputes/:id/parties/:partyId/brief/session` — start AI chat session, return session ID
+- [x] `PUT /v1/disputes/:id/parties/:partyId/brief/draft` — save draft (multiple times)
+- [x] `POST /v1/disputes/:id/parties/:partyId/brief/submit` — submit final brief (immutable), trigger evaluation if both submitted
+- [x] `GET /v1/disputes/:id/parties/:partyId/brief` — get brief (own only until both submitted)
+- [x] Data isolation enforcement — party A cannot read party B's brief until both sealed
 
 ### 5.2 Backend — AI Brief Assistant (LangChain + OpenRouter)
-- [ ] Set up OpenRouter provider in LangChain
-- [ ] Implement streaming chat endpoint for brief preparation
-- [ ] Brief template structure prompt (5 sections: facts, position, arguments, acknowledgment, desired outcome)
-- [ ] Enforce word limits (500–2000 words, hard cap 5000)
-- [ ] Store conversation history in `BriefPrepSession`
+- [x] Set up OpenRouter provider in LangChain
+- [x] Implement streaming chat endpoint for brief preparation
+- [x] Brief template structure prompt (5 sections: facts, position, arguments, acknowledgment, desired outcome)
+- [x] Enforce word limits (500–2000 words, hard cap 5000)
+- [x] Store conversation history in `BriefPrepSession`
 
 ### 5.3 Frontend — Brief Writing Page
-- [ ] Split layout — AI chat on left, brief draft editor on right
-- [ ] Chat interface with streaming response (typewriter effect)
-- [ ] LLM provider selector (Claude, GPT-4, Gemini via OpenRouter)
-- [ ] Brief sections panel (5 labeled sections with text areas)
-- [ ] Word count indicator per section + total
-- [ ] "Save Draft" button (auto-save every 60 seconds)
-- [ ] "Submit Final Brief" button with confirmation modal ("You cannot edit after submitting")
-- [ ] Waiting screen after submission ("Waiting for the other party to submit their brief...")
+- [x] Split layout — AI chat on left, brief draft editor on right
+- [x] Chat interface with streaming response (typewriter effect)
+- [x] LLM provider selector (Claude, GPT-4, Gemini via OpenRouter)
+- [x] Brief sections panel (5 labeled sections with text areas)
+- [x] Word count indicator per section + total
+- [x] "Save Draft" button (auto-save every 60 seconds)
+- [x] "Submit Final Brief" button with confirmation modal ("You cannot edit after submitting")
+- [x] Waiting screen after submission ("Waiting for the other party to submit their brief...")
 
 ---
 
