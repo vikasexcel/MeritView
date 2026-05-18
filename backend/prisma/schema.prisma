@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  user
+  admin
+}
+
+enum DisputeCategory {
+  contract
+  small_claims
+  partnership
+}
+
+enum DisputeState {
+  draft
+  awaiting_counterparty
+  in_progress
+  under_analysis
+  completed
+  cancelled
+  refunded
+}
+
+enum PartyRole {
+  initiator
+  respondent
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  declined
+}
+
+enum BriefStatus {
+  not_started
+  in_progress
+  submitted
+}
+
+enum SessionStatus {
+  active
+  ended
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+enum AuditEventType {
+  dispute_created
+  invitation_sent
+  invitation_accepted
+  invitation_declined
+  brief_draft_saved
+  brief_submitted
+  evaluation_started
+  evaluator_completed
+  opinion_generated
+  payment_created
+  payment_succeeded
+  payment_refunded
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      UserRole @default(user)
+  createdAt DateTime @default(now())
+
+  initiatedDisputes Dispute[]    @relation("InitiatorDisputes")
+  parties           Party[]
+  payments          Payment[]
+  auditEvents       AuditEvent[]  @relation("ActorAuditEvents")
+
+  @@index([email])
+}
+
+model Dispute {
+  id          String          @id @default(cuid())
+  title       String
+  category    DisputeCategory
+  summary     String
+  state       DisputeState    @default(draft)
+  stakes      Decimal?        @db.Decimal(12, 2)
+  initiatorId String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  initiator   User         @relation("InitiatorDisputes", fields: [initiatorId], references: [id])
+  parties     Party[]
+  opinion     Opinion?
+  payments    Payment[]
+
+  @@index([initiatorId])
+  @@index([state])
+}
+
+model Party {
+  id               String           @id @default(cuid())
+  disputeId        String
+  userId           String?
+  role             PartyRole
+  invitationToken  String?          @unique
+  invitationStatus InvitationStatus @default(pending)
+  briefStatus      BriefStatus      @default(not_started)
+  createdAt        DateTime         @default(now())
+
+  dispute      Dispute            @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  user         User?              @relation(fields: [userId], references: [id])
+  brief        Brief?
+  prepSessions BriefPrepSession[]
+
+  @@index([disputeId])
+  @@index([invitationToken])
+}
+
+model Brief {
+  id          String      @id @default(cuid())
+  partyId     String      @unique
+  disputeId   String
+  content     Json
+  wordCount   Int         @default(0)
+  status      BriefStatus @default(in_progress)
+  submittedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  party Party @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  @@index([disputeId])
+}
+
+model BriefPrepSession {
+  id          String        @id @default(cuid())
+  partyId     String
+  disputeId   String
+  llmProvider String
+  messages    Json          @default("[]")
+  totalTokens Int           @default(0)
+  status      SessionStatus @default(active)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  party Party @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  @@index([partyId])
+  @@index([disputeId])
+}
+
+model EvaluatorOutput {
+  id               String   @id @default(cuid())
+  disputeId        String
+  llmProvider      String
+  structuredOutput Json
+  promptVersion    String
+  tokensUsed       Int      @default(0)
+  cost             Decimal  @db.Decimal(10, 6)
+  createdAt        DateTime @default(now())
+
+  @@index([disputeId])
+}
+
+model Opinion {
+  id                    String   @id @default(cuid())
+  disputeId             String   @unique
+  executiveSummary      String
+  partyAAnalysis        Json
+  partyBAnalysis        Json
+  comparativeAssessment Json
+  confidenceScore       Int
+  aggregatorAgreement   Decimal  @db.Decimal(5, 4)
+  deliveredAt           DateTime @default(now())
+
+  dispute Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id                    String        @id @default(cuid())
+  disputeId             String
+  userId                String
+  amountUsd             Decimal       @db.Decimal(10, 2)
+  status                PaymentStatus @default(pending)
+  stripePaymentIntentId String?       @unique
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  dispute Dispute @relation(fields: [disputeId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([disputeId])
+  @@index([userId])
+}
+
+model AuditEvent {
+  id           String         @id @default(cuid())
+  eventType    AuditEventType
+  actorId      String?
+  resourceType String
+  resourceId   String
+  eventData    Json           @default("{}")
+  createdAt    DateTime       @default(now())
+
+  actor User? @relation("ActorAuditEvents", fields: [actorId], references: [id])
+
+  @@index([resourceType, resourceId])
+  @@index([actorId])
+  @@index([createdAt])
+}
