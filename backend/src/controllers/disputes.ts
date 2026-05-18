@@ -58,7 +58,7 @@ export async function listDisputes(req: Request, res: Response) {
 }
 
 export async function getDispute(req: Request, res: Response) {
-  const dispute = await disputeService.getDispute(req.params.id, req.user!.id)
+  const dispute = await disputeService.getDispute(req.params.id as string, req.user!.id)
   if (!dispute) {
     res.status(404).json({ error: 'not found' })
     return
