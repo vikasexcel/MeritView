@@ -61,3 +61,55 @@ export const disputeApi = {
 
   declineInvitation: (token: string) => api.post(`/v1/invitations/${token}/decline`),
 }
+
+export type LlmProvider = 'claude' | 'gpt-4' | 'gemini'
+
+export interface BriefContent {
+  facts: string
+  position: string
+  arguments: string
+  acknowledgment: string
+  desiredOutcome: string
+}
+
+export interface Brief {
+  id: string
+  partyId: string
+  disputeId: string
+  content: BriefContent
+  wordCount: number
+  status: 'in_progress' | 'submitted'
+  submittedAt: string | null
+}
+
+export interface BriefPrepSession {
+  id: string
+  partyId: string
+  disputeId: string
+  llmProvider: string
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>
+  status: 'active' | 'ended'
+}
+
+export const briefApi = {
+  startSession: (disputeId: string, partyId: string, llmProvider: LlmProvider) =>
+    api.post<{ session: BriefPrepSession }>(
+      `/v1/disputes/${disputeId}/parties/${partyId}/brief/session`,
+      { llmProvider }
+    ),
+
+  saveDraft: (disputeId: string, partyId: string, content: BriefContent) =>
+    api.put<{ brief: Brief }>(
+      `/v1/disputes/${disputeId}/parties/${partyId}/brief/draft`,
+      { content }
+    ),
+
+  submitBrief: (disputeId: string, partyId: string, content: BriefContent) =>
+    api.post<{ brief: Brief; bothSubmitted: boolean }>(
+      `/v1/disputes/${disputeId}/parties/${partyId}/brief/submit`,
+      { content }
+    ),
+
+  getBrief: (disputeId: string, partyId: string) =>
+    api.get<{ brief: Brief }>(`/v1/disputes/${disputeId}/parties/${partyId}/brief`),
+}

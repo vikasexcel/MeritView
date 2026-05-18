@@ -14,6 +14,7 @@ import { InvitationPage } from '@/pages/invitations/InvitationPage'
 import { Dashboard } from '@/pages/dashboard/Dashboard'
 import { CreateDispute } from '@/pages/disputes/CreateDispute'
 import { DisputeDetail } from '@/pages/disputes/DisputeDetail'
+import { BriefWriting } from '@/pages/disputes/BriefWriting'
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="new" element={<CreateDispute />} />
           <Route path=":id" element={<DisputeDetail />} />
+          <Route path=":id/parties/:partyId/brief" element={<BriefWriting />} />
         </Route>
       </Route>
 
