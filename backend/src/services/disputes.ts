@@ -7,44 +7,46 @@ export interface CreateDisputeInput {
   category: DisputeCategory
   summary: string
   stakes?: number
-  counterpartyEmail: string
-  counterpartyName: string
   initiatorId: string
 }
 
 export async function createDispute(input: CreateDisputeInput) {
   const invitationToken = crypto.randomBytes(32).toString('hex')
 
-  const dispute = await prisma.dispute.create({
-    data: {
-      title: input.title,
-      category: input.category,
-      summary: input.summary,
-      stakes: input.stakes ?? null,
-      initiatorId: input.initiatorId,
-      state: 'awaiting_counterparty',
-      parties: {
-        create: [
-          { userId: input.initiatorId, role: 'initiator', invitationStatus: 'accepted' },
-          {
-            role: 'respondent',
-            invitationToken,
-            invitationStatus: 'pending',
-          },
-        ],
+  const dispute = await prisma.$transaction(async (tx) => {
+    const d = await tx.dispute.create({
+      data: {
+        title: input.title,
+        category: input.category,
+        summary: input.summary,
+        stakes: input.stakes ?? null,
+        initiatorId: input.initiatorId,
+        state: 'awaiting_counterparty',
+        parties: {
+          create: [
+            { userId: input.initiatorId, role: 'initiator', invitationStatus: 'accepted' },
+            {
+              role: 'respondent',
+              invitationToken,
+              invitationStatus: 'pending',
+            },
+          ],
+        },
       },
-    },
-    include: { parties: true },
-  })
+      include: { parties: true },
+    })
 
-  await prisma.auditEvent.create({
-    data: {
-      eventType: 'dispute_created',
-      actorId: input.initiatorId,
-      resourceType: 'dispute',
-      resourceId: dispute.id,
-      eventData: { title: input.title, category: input.category },
-    },
+    await tx.auditEvent.create({
+      data: {
+        eventType: 'dispute_created',
+        actorId: input.initiatorId,
+        resourceType: 'dispute',
+        resourceId: d.id,
+        eventData: { title: input.title, category: input.category },
+      },
+    })
+
+    return d
   })
 
   return { dispute, invitationToken }
@@ -93,13 +95,15 @@ export async function getPartyByToken(token: string) {
 export async function acceptInvitation(token: string, userId: string) {
   const party = await prisma.party.findUnique({ where: { invitationToken: token } })
   if (!party) return null
-  if (party.invitationStatus !== 'pending') return { error: 'already_responded' as const }
 
-  const [updatedParty] = await prisma.$transaction([
-    prisma.party.update({
-      where: { invitationToken: token },
-      data: { userId, invitationStatus: 'accepted' },
-    }),
+  const updated = await prisma.party.updateMany({
+    where: { invitationToken: token, invitationStatus: 'pending' },
+    data: { userId, invitationStatus: 'accepted' },
+  })
+
+  if (updated.count === 0) return { error: 'already_responded' as const }
+
+  await prisma.$transaction([
     prisma.dispute.update({
       where: { id: party.disputeId },
       data: { state: 'in_progress' },
@@ -115,19 +119,22 @@ export async function acceptInvitation(token: string, userId: string) {
     }),
   ])
 
-  return { party: updatedParty }
+  const updatedParty = await prisma.party.findUnique({ where: { invitationToken: token } })
+  return { party: updatedParty! }
 }
 
-export async function declineInvitation(token: string) {
+export async function declineInvitation(token: string, userId?: string) {
   const party = await prisma.party.findUnique({ where: { invitationToken: token } })
   if (!party) return null
-  if (party.invitationStatus !== 'pending') return { error: 'already_responded' as const }
+
+  const updated = await prisma.party.updateMany({
+    where: { invitationToken: token, invitationStatus: 'pending' },
+    data: { invitationStatus: 'declined' },
+  })
+
+  if (updated.count === 0) return { error: 'already_responded' as const }
 
   await prisma.$transaction([
-    prisma.party.update({
-      where: { invitationToken: token },
-      data: { invitationStatus: 'declined' },
-    }),
     prisma.dispute.update({
       where: { id: party.disputeId },
       data: { state: 'cancelled' },
@@ -135,7 +142,7 @@ export async function declineInvitation(token: string) {
     prisma.auditEvent.create({
       data: {
         eventType: 'invitation_declined',
-        actorId: null,
+        actorId: userId ?? null,
         resourceType: 'party',
         resourceId: party.id,
         eventData: { disputeId: party.disputeId },
