@@ -27,8 +27,8 @@ export function Dashboard() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">My Disputes</h1>
-        <Button asChild>
-          <Link to="/disputes/new">
+        <Button>
+          <Link to="/disputes/new" className="flex items-center">
             <Plus className="w-4 h-4 mr-2" />
             New Dispute
           </Link>
@@ -42,7 +42,7 @@ export function Dashboard() {
       {!isLoading && data?.length === 0 && (
         <div className="text-center py-16 space-y-3">
           <p className="text-muted-foreground">You have no disputes yet.</p>
-          <Button asChild variant="outline">
+          <Button variant="outline">
             <Link to="/disputes/new">Create your first dispute</Link>
           </Button>
         </div>
@@ -66,7 +66,7 @@ export function Dashboard() {
                     {dispute.category.replace('_', ' ')}
                     {dispute.stakes ? ` · $${Number(dispute.stakes).toLocaleString()}` : ''}
                   </span>
-                  <Button asChild size="sm" variant="ghost">
+                  <Button size="sm" variant="ghost">
                     <Link to={`/disputes/${dispute.id}`}>View →</Link>
                   </Button>
                 </div>
