@@ -7,7 +7,13 @@ import { Landing } from '@/pages/Landing'
 import { NotFound } from '@/pages/NotFound'
 import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
+import { ForgotPassword } from '@/pages/auth/ForgotPassword'
+import { ResetPassword } from '@/pages/auth/ResetPassword'
+import { VerifyEmail } from '@/pages/auth/VerifyEmail'
+import { InvitationPage } from '@/pages/invitations/InvitationPage'
 import { Dashboard } from '@/pages/dashboard/Dashboard'
+import { CreateDispute } from '@/pages/disputes/CreateDispute'
+import { DisputeDetail } from '@/pages/disputes/DisputeDetail'
 
 function App() {
   return (
@@ -19,13 +25,15 @@ function App() {
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
       </Route>
+
+      <Route path="/invite/:token" element={<InvitationPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<Dashboard />} />
-        </Route>
-        <Route path="/disputes" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
         </Route>
         <Route path="/settings" element={<DashboardLayout />}>
