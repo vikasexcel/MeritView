@@ -67,25 +67,25 @@
 ## Phase 3: Core Pages & Navigation (Frontend)
 
 ### 3.1 Layout & Navigation
-- [ ] Top navbar — logo, nav links, user avatar/menu
-- [ ] Dashboard layout wrapper
-- [ ] Mobile responsive hamburger menu
-- [ ] Loading spinner / skeleton components
-- [ ] Toast notification setup (shadcn Toaster)
-- [ ] 404 page
+- [x] Top navbar — logo, nav links, user avatar/menu
+- [x] Dashboard layout wrapper
+- [x] Mobile responsive hamburger menu
+- [x] Loading spinner / skeleton components
+- [x] Toast notification setup (shadcn Toaster)
+- [x] 404 page
 
 ### 3.2 Dashboard (Home after login)
-- [ ] List of user's disputes (cards with state badges)
-- [ ] "Start New Dispute" button
-- [ ] Dispute state badge colors (draft, in progress, under analysis, completed)
-- [ ] Empty state illustration/message
+- [x] List of user's disputes (cards with state badges)
+- [x] "Start New Dispute" button
+- [x] Dispute state badge colors (draft, in progress, under analysis, completed)
+- [x] Empty state illustration/message
 
 ### 3.3 Landing Page (Public)
-- [ ] Hero section — headline, subheadline, CTA button
-- [ ] How it works — 3-step visual (Create → Write Brief → Get Analysis)
-- [ ] Pricing section ($99 standard, $199 expedited, $299 extended)
-- [ ] FAQ section
-- [ ] Footer
+- [x] Hero section — headline, subheadline, CTA button
+- [x] How it works — 3-step visual (Create → Write Brief → Get Analysis)
+- [x] Pricing section ($99 standard, $199 expedited, $299 extended)
+- [x] FAQ section
+- [x] Footer
 
 ---
 
