@@ -1,39 +1,19 @@
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { Home } from '@/pages/Home'
+import { Landing } from '@/pages/Landing'
 import { NotFound } from '@/pages/NotFound'
 import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
-import { signOut } from '@/lib/authClient'
-import { useAuthStore } from '@/store/authStore'
-import { Button } from '@/components/ui/button'
-
-function DashboardHome() {
-  const navigate = useNavigate()
-  const { user, clearAuth } = useAuthStore()
-
-  async function handleLogout() {
-    await signOut()
-    clearAuth()
-    navigate('/')
-  }
-
-  return (
-    <div className="p-6 space-y-4">
-      <p className="text-foreground">Welcome, {user?.name}. Dashboard coming soon.</p>
-      <Button variant="outline" onClick={handleLogout}>Sign out</Button>
-    </div>
-  )
-}
+import { Dashboard } from '@/pages/dashboard/Dashboard'
 
 function App() {
   return (
     <Routes>
       <Route element={<PublicLayout />}>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Landing />} />
       </Route>
 
       <Route element={<AuthLayout />}>
@@ -43,7 +23,13 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<DashboardHome />} />
+          <Route index element={<Dashboard />} />
+        </Route>
+        <Route path="/disputes" element={<DashboardLayout />}>
+          <Route index element={<Dashboard />} />
+        </Route>
+        <Route path="/settings" element={<DashboardLayout />}>
+          <Route index element={<div className="p-6 text-muted-foreground text-sm">Settings — coming in Phase 10</div>} />
         </Route>
       </Route>
 
