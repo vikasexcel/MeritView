@@ -31,6 +31,11 @@ function App() {
         <Route path="/settings" element={<DashboardLayout />}>
           <Route index element={<div className="p-6 text-muted-foreground text-sm">Settings — coming in Phase 10</div>} />
         </Route>
+        <Route path="/disputes" element={<DashboardLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="new" element={<CreateDispute />} />
+          <Route path=":id" element={<DisputeDetail />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<NotFound />} />

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { resetPassword } from '@/lib/authClient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,9 +12,8 @@ export function ResetPassword() {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
 
@@ -34,15 +32,7 @@ export function ResetPassword() {
       return
     }
 
-    setLoading(true)
-    const { error: authError } = await resetPassword({ newPassword: password, token })
-    setLoading(false)
-
-    if (authError) {
-      setError(authError.message ?? 'Reset failed. The link may have expired.')
-      return
-    }
-
+    // TODO: Implement password reset flow in future phase
     navigate('/login?reset=success')
   }
 
@@ -88,8 +78,8 @@ export function ResetPassword() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button type="submit" className="w-full" disabled={loading || !token}>
-            {loading ? 'Updating…' : 'Update password'}
+          <Button type="submit" className="w-full" disabled={!token}>
+            Update password
           </Button>
         </CardFooter>
       </form>

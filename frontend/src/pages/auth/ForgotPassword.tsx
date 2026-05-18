@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { forgetPassword } from '@/lib/authClient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,16 +8,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 export function ForgotPassword() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
-  const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
-    await forgetPassword({
-      email,
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    })
-    setLoading(false)
+    // TODO: Implement password reset flow in future phase
     setSubmitted(true)
   }
 
@@ -62,8 +55,8 @@ export function ForgotPassword() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Sending…' : 'Send reset link'}
+          <Button type="submit" className="w-full">
+            Send reset link
           </Button>
           <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground text-center">
             Back to sign in
