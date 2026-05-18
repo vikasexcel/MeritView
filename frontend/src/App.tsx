@@ -1,45 +1,19 @@
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { Home } from '@/pages/Home'
+import { Landing } from '@/pages/Landing'
 import { NotFound } from '@/pages/NotFound'
 import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
-import { Dashboard } from '@/pages/disputes/Dashboard'
-import { CreateDispute } from '@/pages/disputes/CreateDispute'
-import { DisputeDetail } from '@/pages/disputes/DisputeDetail'
-import { InvitationPage } from '@/pages/invitations/InvitationPage'
-import { signOut } from '@/lib/authClient'
-import { useAuthStore } from '@/store/authStore'
-import { buttonVariants } from '@/components/ui/button'
-
-function DashboardHome() {
-  const navigate = useNavigate()
-  const { clearAuth } = useAuthStore()
-
-  async function handleLogout() {
-    await signOut()
-    clearAuth()
-    navigate('/')
-  }
-
-  return (
-    <div className="p-6">
-      <button className={buttonVariants({ variant: 'outline' })} onClick={handleLogout}>
-        Sign out
-      </button>
-    </div>
-  )
-}
+import { Dashboard } from '@/pages/dashboard/Dashboard'
 
 function App() {
   return (
     <Routes>
       <Route element={<PublicLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/invite/:token" element={<InvitationPage />} />
+        <Route path="/" element={<Landing />} />
       </Route>
 
       <Route element={<AuthLayout />}>
@@ -49,7 +23,13 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<DashboardHome />} />
+          <Route index element={<Dashboard />} />
+        </Route>
+        <Route path="/disputes" element={<DashboardLayout />}>
+          <Route index element={<Dashboard />} />
+        </Route>
+        <Route path="/settings" element={<DashboardLayout />}>
+          <Route index element={<div className="p-6 text-muted-foreground text-sm">Settings — coming in Phase 10</div>} />
         </Route>
         <Route path="/disputes" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />

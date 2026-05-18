@@ -5,3 +5,8 @@ export const authClient = createAuthClient({
 })
 
 export const { signIn, signUp, signOut, useSession } = authClient
+
+// Stubs — these features are deferred to a later phase
+export const forgetPassword = async (_opts: { email: string; redirectTo: string }): Promise<{ error: { message?: string } | null }> => ({ error: null })
+export const resetPassword = async (_opts: { newPassword: string; token: string }): Promise<{ error: { message?: string } | null }> => ({ error: null })
+export const sendVerificationEmail = async (_opts: { email: string; callbackURL: string }): Promise<{ error: { message?: string } | null }> => ({ error: null })
