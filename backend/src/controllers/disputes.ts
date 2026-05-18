@@ -47,7 +47,9 @@ export async function createDispute(req: Request, res: Response) {
   const appUrl = process.env.APP_URL || 'http://localhost:5173'
   const inviteUrl = `${appUrl}/invite/${invitationToken}`
 
-  await sendInvitationEmail(counterpartyEmail, counterpartyName, dispute.title, inviteUrl)
+  sendInvitationEmail(counterpartyEmail, counterpartyName, dispute.title, inviteUrl).catch((err) => {
+    console.error('[createDispute] Failed to send invitation email:', err)
+  })
 
   res.status(201).json({ dispute, invitationToken, inviteUrl })
 }
