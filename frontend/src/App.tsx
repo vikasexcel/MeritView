@@ -7,13 +7,17 @@ import { Home } from '@/pages/Home'
 import { NotFound } from '@/pages/NotFound'
 import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
+import { Dashboard } from '@/pages/disputes/Dashboard'
+import { CreateDispute } from '@/pages/disputes/CreateDispute'
+import { DisputeDetail } from '@/pages/disputes/DisputeDetail'
+import { InvitationPage } from '@/pages/invitations/InvitationPage'
 import { signOut } from '@/lib/authClient'
 import { useAuthStore } from '@/store/authStore'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 
 function DashboardHome() {
   const navigate = useNavigate()
-  const { user, clearAuth } = useAuthStore()
+  const { clearAuth } = useAuthStore()
 
   async function handleLogout() {
     await signOut()
@@ -22,9 +26,10 @@ function DashboardHome() {
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <p className="text-foreground">Welcome, {user?.name}. Dashboard coming soon.</p>
-      <Button variant="outline" onClick={handleLogout}>Sign out</Button>
+    <div className="p-6">
+      <button className={buttonVariants({ variant: 'outline' })} onClick={handleLogout}>
+        Sign out
+      </button>
     </div>
   )
 }
@@ -34,6 +39,7 @@ function App() {
     <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/invite/:token" element={<InvitationPage />} />
       </Route>
 
       <Route element={<AuthLayout />}>
@@ -44,6 +50,11 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
+        </Route>
+        <Route path="/disputes" element={<DashboardLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="new" element={<CreateDispute />} />
+          <Route path=":id" element={<DisputeDetail />} />
         </Route>
       </Route>
 
