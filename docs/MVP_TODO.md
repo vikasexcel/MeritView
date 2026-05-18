@@ -7,37 +7,37 @@
 ## Phase 1: Project Setup & Foundation
 
 ### 1.1 Frontend Setup
-- [ ] Initialize React + Vite project
-- [ ] Install and configure Tailwind CSS v4
-- [ ] Install and configure shadcn/ui
-- [ ] Set up folder structure (`pages/`, `components/`, `store/`, `lib/`, `hooks/`)
-- [ ] Install Zustand for global state
-- [ ] Install React Query (TanStack Query) for server state
-- [ ] Set up React Router for navigation
-- [ ] Create base layout component (navbar, sidebar, main content area)
-- [ ] Set up environment variables (`.env`, `.env.example`)
+- [x] Initialize React + Vite project
+- [x] Install and configure Tailwind CSS v4
+- [x] Install and configure shadcn/ui
+- [x] Set up folder structure (`pages/`, `components/`, `store/`, `lib/`, `hooks/`)
+- [x] Install Zustand for global state
+- [x] Install React Query (TanStack Query) for server state
+- [x] Set up React Router for navigation
+- [x] Create base layout component (navbar, sidebar, main content area)
+- [x] Set up environment variables (`.env`, `.env.example`)
 
 ### 1.2 Backend Setup
-- [ ] Initialize Node.js + Express.js project
-- [ ] Set up TypeScript config
-- [ ] Set up folder structure (`routes/`, `controllers/`, `services/`, `middleware/`, `prisma/`)
-- [ ] Connect PostgreSQL database
-- [ ] Initialize Prisma and create base schema
-- [ ] Set up environment variables
-- [ ] Set up CORS, helmet, rate limiting middleware
-- [ ] Add basic health check endpoint (`GET /health`)
+- [x] Initialize Node.js + Express.js project
+- [x] Set up TypeScript config
+- [x] Set up folder structure (`routes/`, `controllers/`, `services/`, `middleware/`, `prisma/`)
+- [ ] Connect PostgreSQL database *(requires DATABASE_URL)*
+- [x] Initialize Prisma and create base schema
+- [x] Set up environment variables
+- [x] Set up CORS, helmet, rate limiting middleware
+- [x] Add basic health check endpoint (`GET /health`)
 
 ### 1.3 Database Schema (Prisma)
-- [ ] `User` table — id, email, name, role, createdAt
-- [ ] `Dispute` table — id, title, category, summary, state, stakes, initiatorId, createdAt
-- [ ] `Party` table — id, disputeId, userId, role (initiator/respondent), invitationToken, invitationStatus, briefStatus
-- [ ] `Brief` table — id, partyId, disputeId, content (sections JSON), wordCount, status, submittedAt
-- [ ] `BriefPrepSession` table — id, partyId, disputeId, llmProvider, messages JSON, totalTokens, status
-- [ ] `EvaluatorOutput` table — id, disputeId, llmProvider, structuredOutput JSON, promptVersion, tokensUsed, cost
-- [ ] `Opinion` table — id, disputeId, executiveSummary, partyAAnalysis JSON, partyBAnalysis JSON, comparativeAssessment, confidenceScore, aggregatorAgreement, deliveredAt
-- [ ] `Payment` table — id, disputeId, userId, amountUsd, status, stripePaymentIntentId, createdAt
-- [ ] `AuditEvent` table — id, eventType, actorId, resourceType, resourceId, eventData JSON, createdAt
-- [ ] Run initial Prisma migration
+- [x] `User` table — id, email, name, role, createdAt
+- [x] `Dispute` table — id, title, category, summary, state, stakes, initiatorId, createdAt
+- [x] `Party` table — id, disputeId, userId, role (initiator/respondent), invitationToken, invitationStatus, briefStatus
+- [x] `Brief` table — id, partyId, disputeId, content (sections JSON), wordCount, status, submittedAt
+- [x] `BriefPrepSession` table — id, partyId, disputeId, llmProvider, messages JSON, totalTokens, status
+- [x] `EvaluatorOutput` table — id, disputeId, llmProvider, structuredOutput JSON, promptVersion, tokensUsed, cost
+- [x] `Opinion` table — id, disputeId, executiveSummary, partyAAnalysis JSON, partyBAnalysis JSON, comparativeAssessment, confidenceScore, aggregatorAgreement, deliveredAt
+- [x] `Payment` table — id, disputeId, userId, amountUsd, status, stripePaymentIntentId, createdAt
+- [x] `AuditEvent` table — id, eventType, actorId, resourceType, resourceId, eventData JSON, createdAt
+- [ ] Run initial Prisma migration *(requires live PostgreSQL connection)*
 
 ---
 
