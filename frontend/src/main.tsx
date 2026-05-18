@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
+import { Toaster } from '@/components/ui/sonner'
 import App from './App'
 import './index.css'
 
@@ -18,6 +19,7 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <ThemeProvider defaultTheme="system" storageKey="meritview-theme">
           <App />
+          <Toaster richColors position="top-right" />
         </ThemeProvider>
       </BrowserRouter>
     </QueryClientProvider>
