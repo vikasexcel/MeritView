@@ -92,28 +92,28 @@
 ## Phase 4: Dispute Creation Flow
 
 ### 4.1 Backend — Dispute Endpoints
-- [ ] `POST /v1/disputes` — create dispute, generate invitation link
-- [ ] `GET /v1/disputes` — list user's disputes
-- [ ] `GET /v1/disputes/:id` — dispute detail (fields filtered by state)
-- [ ] `POST /v1/invitations/:token/accept` — counterparty accepts invite
-- [ ] `POST /v1/invitations/:token/decline` — counterparty declines (triggers refund)
-- [ ] Dispute state machine logic (draft → awaiting_counterparty → in_progress → ...)
-- [ ] Invitation email sending (send email with invite link)
+- [x] `POST /v1/disputes` — create dispute, generate invitation link
+- [x] `GET /v1/disputes` — list user's disputes
+- [x] `GET /v1/disputes/:id` — dispute detail (fields filtered by state)
+- [x] `POST /v1/invitations/:token/accept` — counterparty accepts invite
+- [x] `POST /v1/invitations/:token/decline` — counterparty declines (triggers refund)
+- [x] Dispute state machine logic (draft → awaiting_counterparty → in_progress → ...)
+- [x] Invitation email sending (send email with invite link)
 
 ### 4.2 Frontend — Create Dispute
-- [ ] Multi-step form: Step 1 — Dispute title + category (contract / small claims / partnership)
-- [ ] Multi-step form: Step 2 — Summary + estimated stakes
-- [ ] Multi-step form: Step 3 — Counterparty email + name
-- [ ] Multi-step form: Step 4 — Choose pricing tier + Stripe payment
-- [ ] Form progress indicator (step 1 of 4)
-- [ ] Form validation (required fields, word limits)
-- [ ] Success page after dispute created (show invitation link)
+- [x] Multi-step form: Step 1 — Dispute title + category (contract / small claims / partnership)
+- [x] Multi-step form: Step 2 — Summary + estimated stakes
+- [x] Multi-step form: Step 3 — Counterparty email + name
+- [ ] Multi-step form: Step 4 — Choose pricing tier + Stripe payment *(deferred to Phase 8)*
+- [x] Form progress indicator (step 1 of 4)
+- [x] Form validation (required fields, word limits)
+- [x] Success page after dispute created (show invitation link)
 
 ### 4.3 Frontend — Invitation Accept/Decline
-- [ ] Public invitation landing page (`/invite/:token`)
-- [ ] Show dispute summary to invited party
-- [ ] Accept button → register/login → join dispute
-- [ ] Decline button → confirmation modal
+- [x] Public invitation landing page (`/invite/:token`)
+- [x] Show dispute summary to invited party
+- [x] Accept button → register/login → join dispute
+- [x] Decline button → confirmation modal
 
 ---
 
