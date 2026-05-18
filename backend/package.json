@@ -15,11 +15,6 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "vitest": {
-    "environment": "node",
-    "globals": true,
-    "setupFiles": ["./src/tests/setup.ts"]
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
