@@ -8,6 +8,7 @@ const router = Router({ mergeParams: true })
 router.use(requireAuth)
 
 router.get('/', opinionsController.getOpinion)
+router.get('/pdf', opinionsController.getOpinionPdf)
 router.get('/status', opinionsController.getOpinionStatus)
 router.get('/stream', opinionsController.streamOpinionProgress)
 

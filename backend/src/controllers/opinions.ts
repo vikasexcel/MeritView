@@ -45,6 +45,18 @@ export async function getOpinionStatus(req: Request<OpinionParams>, res: Respons
   res.json(status)
 }
 
+export async function getOpinionPdf(req: Request<OpinionParams>, res: Response) {
+  const { id: disputeId } = req.params
+
+  const isParticipant = await isDisputeParticipant(disputeId, req.user!.id)
+  if (!isParticipant) {
+    res.status(403).json({ error: 'forbidden' })
+    return
+  }
+
+  res.status(501).json({ error: 'PDF generation not yet implemented' })
+}
+
 export async function streamOpinionProgress(req: Request<OpinionParams>, res: Response) {
   const { id: disputeId } = req.params
 
