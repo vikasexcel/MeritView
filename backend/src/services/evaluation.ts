@@ -1,6 +1,6 @@
 // backend/src/services/evaluation.ts
 import { prisma } from '../lib/prisma'
-import { runEvaluators } from '../lib/evaluator'
+import { runEvaluators, EVALUATOR_COUNT } from '../lib/evaluator'
 import { aggregateResults } from '../lib/aggregator'
 import { BriefContent } from './briefs'
 
@@ -52,28 +52,29 @@ export async function triggerEvaluation(disputeId: string): Promise<void> {
   const partyAText = briefToText(partyA.brief.content as BriefContent)
   const partyBText = briefToText(partyB.brief.content as BriefContent)
 
+  // Run all LLM work first — no DB writes until all succeed
   const evaluatorResults = await runEvaluators(disputeId, partyAText, partyBText)
-
-  for (let i = 0; i < evaluatorResults.length; i++) {
-    const r = evaluatorResults[i]
-    await prisma.evaluatorOutput.create({
-      data: {
-        disputeId,
-        llmProvider: r.provider,
-        structuredOutput: r.output as object,
-        promptVersion: '1.0',
-        tokensUsed: r.tokensUsed,
-        cost: 0,
-      },
-    })
-    emit(disputeId, { type: 'evaluator_complete', provider: r.provider, index: i + 1, total: evaluatorResults.length })
-  }
-
-  emit(disputeId, { type: 'aggregation_started' })
-
   const agg = await aggregateResults(disputeId, evaluatorResults)
 
+  // Commit everything atomically
   const opinion = await prisma.$transaction(async (tx) => {
+    for (let i = 0; i < evaluatorResults.length; i++) {
+      const r = evaluatorResults[i]
+      await tx.evaluatorOutput.create({
+        data: {
+          disputeId,
+          llmProvider: r.provider,
+          structuredOutput: r.output as object,
+          promptVersion: '1.0',
+          tokensUsed: r.tokensUsed,
+          cost: 0,
+        },
+      })
+      emit(disputeId, { type: 'evaluator_complete', provider: r.provider, index: i + 1, total: evaluatorResults.length })
+    }
+
+    emit(disputeId, { type: 'aggregation_started' })
+
     const op = await tx.opinion.create({
       data: {
         disputeId,
@@ -105,6 +106,7 @@ export async function triggerEvaluation(disputeId: string): Promise<void> {
   })
 
   emit(disputeId, { type: 'opinion_ready', opinionId: opinion.id })
+  progressListeners.delete(disputeId)
 }
 
 export async function getEvaluationStatus(disputeId: string) {
@@ -118,7 +120,7 @@ export async function getEvaluationStatus(disputeId: string) {
   return {
     state: dispute?.state ?? 'unknown',
     evaluatorsCompleted: evaluatorOutputs.length,
-    evaluatorsTotal: 3,
+    evaluatorsTotal: EVALUATOR_COUNT,
     opinionReady: !!opinion,
     opinionId: opinion?.id ?? null,
   }

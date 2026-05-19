@@ -47,6 +47,7 @@ Respond ONLY with a valid JSON object in this exact schema (no markdown, no expl
 `
 
 const PROVIDERS: LlmProvider[] = ['claude', 'gpt-4', 'gemini']
+export const EVALUATOR_COUNT = PROVIDERS.length
 const MAX_RETRIES = 2
 
 // Runs evaluators in parallel using Promise.allSettled — simpler and equivalent to a LangGraph fan-out for this use case
