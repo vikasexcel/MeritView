@@ -62,6 +62,44 @@ export const disputeApi = {
   declineInvitation: (token: string) => api.post(`/v1/invitations/${token}/decline`),
 }
 
+export interface PartyAnalysis {
+  strengths: string[]
+  weaknesses: string[]
+  keyArguments: string[]
+  suggestedConsiderations: string[]
+}
+
+export interface Opinion {
+  id: string
+  disputeId: string
+  executiveSummary: string
+  partyAAnalysis: PartyAnalysis
+  partyBAnalysis: PartyAnalysis
+  comparativeAssessment: string
+  confidenceScore: number
+  aggregatorAgreement: string
+  deliveredAt: string
+}
+
+export interface OpinionStatus {
+  state: DisputeState
+  evaluatorsCompleted: number
+  evaluatorsTotal: number
+  opinionReady: boolean
+  opinionId: string | null
+}
+
+export const opinionApi = {
+  get: (disputeId: string) =>
+    api.get<{ opinion: Opinion }>(`/v1/disputes/${disputeId}/opinion`),
+
+  getStatus: (disputeId: string) =>
+    api.get<OpinionStatus>(`/v1/disputes/${disputeId}/opinion/status`),
+
+  streamUrl: (disputeId: string) =>
+    `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'}/v1/disputes/${disputeId}/opinion/stream`,
+}
+
 export type LlmProvider = 'claude' | 'gpt-4' | 'gemini'
 
 export interface BriefContent {

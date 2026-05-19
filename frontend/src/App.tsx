@@ -16,6 +16,7 @@ import { Dashboard as DisputesDashboard } from '@/pages/disputes/Dashboard'
 import { CreateDispute } from '@/pages/disputes/CreateDispute'
 import { DisputeDetail } from '@/pages/disputes/DisputeDetail'
 import { BriefWriting } from '@/pages/disputes/BriefWriting'
+import { OpinionPage } from '@/pages/disputes/OpinionPage'
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
           <Route path="new" element={<CreateDispute />} />
           <Route path=":id" element={<DisputeDetail />} />
           <Route path=":id/parties/:partyId/brief" element={<BriefWriting />} />
+          <Route path=":id/opinion" element={<OpinionPage />} />
         </Route>
       </Route>
 

@@ -42,6 +42,8 @@ export function DisputeDetail() {
   const myParty = data.parties.find((p) => p.userId === user?.id)
   const canWriteBrief = data.state === 'in_progress' && myParty && myParty.briefStatus !== 'submitted'
   const waitingForAnalysis = data.state === 'in_progress' && myParty?.briefStatus === 'submitted'
+  const isUnderAnalysis = data.state === 'under_analysis'
+  const isCompleted = data.state === 'completed'
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
@@ -126,6 +128,18 @@ export function DisputeDetail() {
             <div className="text-sm text-center text-muted-foreground py-2 border rounded-md bg-muted/30">
               Waiting for the other party to submit their brief...
             </div>
+          )}
+
+          {isUnderAnalysis && (
+            <Button className="w-full" onClick={() => navigate(`/disputes/${id}/opinion`)}>
+              View Analysis Progress
+            </Button>
+          )}
+
+          {isCompleted && (
+            <Button className="w-full" onClick={() => navigate(`/disputes/${id}/opinion`)}>
+              View Results
+            </Button>
           )}
         </CardContent>
       </Card>
