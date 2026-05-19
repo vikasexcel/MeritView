@@ -109,6 +109,12 @@ export async function submitBrief(partyId: string, disputeId: string, content: B
         eventData: { triggeredBy: 'both_briefs_submitted' },
       },
     })
+    // Fire evaluation asynchronously — do not await so HTTP response is not delayed
+    import('../services/evaluation').then(({ triggerEvaluation }) =>
+      triggerEvaluation(disputeId).catch((err) =>
+        console.error(`[evaluation] failed for dispute ${disputeId}:`, err)
+      )
+    )
   }
 
   return { brief, bothSubmitted: allSubmitted }

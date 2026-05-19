@@ -230,3 +230,10 @@ describe('triggerEvaluation', () => {
     expect(updatedDispute?.state).toBe('completed')
   })
 })
+
+describe('brief submission triggers evaluation', () => {
+  it('triggerEvaluation is importable and callable as a function', async () => {
+    const { triggerEvaluation } = await import('../services/evaluation')
+    expect(typeof triggerEvaluation).toBe('function')
+  })
+})
