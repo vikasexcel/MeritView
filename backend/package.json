@@ -21,6 +21,7 @@
   "type": "commonjs",
   "dependencies": {
     "@langchain/core": "^1.1.46",
+    "@langchain/langgraph": "^1.3.2",
     "@langchain/openai": "^1.4.5",
     "@neondatabase/serverless": "^1.1.0",
     "@prisma/adapter-neon": "^7.8.0",
