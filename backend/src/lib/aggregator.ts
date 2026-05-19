@@ -66,15 +66,20 @@ Overall winner: ${winner}
 
 Write a 3-5 sentence neutral narrative synthesis of these evaluations. Do not use evaluator numbers — write as if presenting a unified analysis. Be factual and objective.`
 
-  const llm = createLlm('claude')
-  const response = await llm.invoke([new HumanMessage(prompt)])
-  return typeof response.content === 'string' ? response.content : JSON.stringify(response.content)
+  try {
+    const llm = createLlm('claude')
+    const response = await llm.invoke([new HumanMessage(prompt)])
+    return typeof response.content === 'string' ? response.content : JSON.stringify(response.content)
+  } catch {
+    return 'Narrative synthesis unavailable.'
+  }
 }
 
 export async function aggregateResults(
-  _disputeId: string,
+  _disputeId: string, // reserved for logging/tracing by caller
   results: EvaluatorResult[]
 ): Promise<AggregateOutput> {
+  if (results.length === 0) throw new Error('aggregateResults requires at least one result')
   const { partyAPoints, partyBPoints } = scorePoints(results)
   const overallWinner = partyAPoints > partyBPoints ? 'Party A' : partyBPoints > partyAPoints ? 'Party B' : 'Draw'
   const aggregatorAgreement = calcAgreement(results)

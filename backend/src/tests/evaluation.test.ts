@@ -143,5 +143,8 @@ describe('aggregateResults', () => {
     ]
     const result = await aggregateResults('dispute-1', mockResults)
     expect(result.overallWinner).toBe('Draw')
+    expect(result.partyAAnalysis.strengths).toBeInstanceOf(Array)
+    expect(result.partyAAnalysis.weaknesses).toBeInstanceOf(Array)
+    expect(result.partyAAnalysis.suggestedConsiderations).toBeInstanceOf(Array)
   })
 })
