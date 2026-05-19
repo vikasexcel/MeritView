@@ -51,7 +51,6 @@ describe('runEvaluators', () => {
 
 describe('runEvaluators — failure handling', () => {
   it('still returns results when 2 of 3 providers succeed', async () => {
-    let callCount = 0
     vi.mocked(vi.importActual('../lib/ai') as any)
     // Re-mock to make one provider fail
     const { createLlm } = await import('../lib/ai')
