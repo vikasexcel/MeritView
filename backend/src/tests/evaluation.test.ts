@@ -1,5 +1,12 @@
 // backend/src/tests/evaluation.test.ts
 import { describe, it, expect, vi } from 'vitest'
+import request from 'supertest'
+import app from '../app'
+import { prisma } from '../lib/prisma'
+
+vi.mock('nodemailer', () => ({
+  default: { createTransport: () => ({ sendMail: vi.fn().mockResolvedValue({ messageId: 'mock' }) }) },
+}))
 
 // Mock LangChain so tests never hit OpenRouter
 vi.mock('../lib/ai', () => ({
@@ -146,5 +153,80 @@ describe('aggregateResults', () => {
     expect(result.partyAAnalysis.strengths).toBeInstanceOf(Array)
     expect(result.partyAAnalysis.weaknesses).toBeInstanceOf(Array)
     expect(result.partyAAnalysis.suggestedConsiderations).toBeInstanceOf(Array)
+  })
+})
+
+async function registerAndLogin(email: string) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await request(app)
+      .post('/api/auth/sign-up/email')
+      .send({ email, password: 'Password123!', name: 'Test User' })
+    const user = await prisma.user.findUnique({ where: { email } })
+    if (!user) continue
+    await prisma.user.update({ where: { email }, data: { emailVerified: true } })
+    const res = await request(app)
+      .post('/api/auth/sign-in/email')
+      .send({ email, password: 'Password123!' })
+    const rawCookie = res.headers['set-cookie']
+    if (rawCookie) return Array.isArray(rawCookie) ? rawCookie : [rawCookie]
+  }
+  return []
+}
+
+let _counter = 1000
+function uid() { return `${Date.now()}-${++_counter}` }
+
+describe('triggerEvaluation', () => {
+  it('creates EvaluatorOutputs and Opinion after running', async () => {
+    const { triggerEvaluation } = await import('../services/evaluation')
+
+    const id = uid()
+    const initiatorEmail = `eval-init-${id}@test.meritview`
+    const respondentEmail = `eval-resp-${id}@test.meritview`
+
+    const initiatorCookie = await registerAndLogin(initiatorEmail)
+    const createRes = await request(app)
+      .post('/v1/disputes')
+      .set('Cookie', initiatorCookie)
+      .send({
+        title: 'Evaluation Test Dispute',
+        category: 'contract',
+        summary: 'Testing evaluation.',
+        counterpartyEmail: 'eval-counterparty@example.com',
+        counterpartyName: 'Respondent',
+      })
+
+    const { dispute, invitationToken } = createRes.body
+    const respondentCookie = await registerAndLogin(respondentEmail)
+    await request(app).post(`/v1/invitations/${invitationToken}/accept`).set('Cookie', respondentCookie)
+
+    // Manually set dispute to under_analysis and create submitted briefs
+    await prisma.dispute.update({ where: { id: dispute.id }, data: { state: 'under_analysis' } })
+    const parties = await prisma.party.findMany({ where: { disputeId: dispute.id } })
+    for (const party of parties) {
+      await prisma.brief.upsert({
+        where: { partyId: party.id },
+        create: {
+          partyId: party.id, disputeId: dispute.id,
+          content: { facts: 'Fact one two three four five six seven eight nine ten.'.repeat(20) },
+          wordCount: 600, status: 'submitted', submittedAt: new Date(),
+        },
+        update: { status: 'submitted', submittedAt: new Date() },
+      })
+      await prisma.party.update({ where: { id: party.id }, data: { briefStatus: 'submitted' } })
+    }
+
+    await triggerEvaluation(dispute.id)
+
+    const opinion = await prisma.opinion.findUnique({ where: { disputeId: dispute.id } })
+    expect(opinion).not.toBeNull()
+    expect(opinion?.executiveSummary).toBeTruthy()
+    expect(opinion?.confidenceScore).toBeGreaterThan(0)
+
+    const evaluatorOutputs = await prisma.evaluatorOutput.findMany({ where: { disputeId: dispute.id } })
+    expect(evaluatorOutputs.length).toBeGreaterThanOrEqual(2)
+
+    const updatedDispute = await prisma.dispute.findUnique({ where: { id: dispute.id } })
+    expect(updatedDispute?.state).toBe('completed')
   })
 })
