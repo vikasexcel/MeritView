@@ -83,3 +83,65 @@ describe('runEvaluators — failure handling', () => {
     }) as any)
   })
 })
+
+describe('aggregateResults', () => {
+  it('calculates scores correctly — Party B wins 3 vs 5', async () => {
+    const { aggregateResults } = await import('../lib/aggregator')
+    const mockResults = [
+      {
+        provider: 'claude' as const,
+        tokensUsed: 0,
+        output: {
+          partyAScore: 3, partyBScore: 5, winner: 'Party B',
+          partyAStrengths: ['Good facts'], partyAWeaknesses: ['Weak arguments'],
+          partyBStrengths: ['Strong evidence'], partyBWeaknesses: [],
+          reasoning: 'Party B wins.', confidenceScore: 80,
+        },
+      },
+      {
+        provider: 'gpt-4' as const,
+        tokensUsed: 0,
+        output: {
+          partyAScore: 4, partyBScore: 6, winner: 'Party B',
+          partyAStrengths: ['Clear timeline'], partyAWeaknesses: ['Missing docs'],
+          partyBStrengths: ['Thorough'], partyBWeaknesses: ['Lengthy'],
+          reasoning: 'Party B more thorough.', confidenceScore: 70,
+        },
+      },
+    ]
+    const result = await aggregateResults('dispute-1', mockResults)
+    expect(result.partyAPoints).toBeLessThan(result.partyBPoints)
+    expect(result.overallWinner).toBe('Party B')
+    expect(result.confidenceScore).toBeGreaterThan(0)
+    expect(result.narrative).toBeTruthy()
+    expect(result.aggregatorAgreement).toBeGreaterThan(0)
+  })
+
+  it('returns Draw when scores are equal', async () => {
+    const { aggregateResults } = await import('../lib/aggregator')
+    const mockResults = [
+      {
+        provider: 'claude' as const,
+        tokensUsed: 0,
+        output: {
+          partyAScore: 5, partyBScore: 5, winner: 'Draw',
+          partyAStrengths: [], partyAWeaknesses: [],
+          partyBStrengths: [], partyBWeaknesses: [],
+          reasoning: 'Equal.', confidenceScore: 60,
+        },
+      },
+      {
+        provider: 'gpt-4' as const,
+        tokensUsed: 0,
+        output: {
+          partyAScore: 5, partyBScore: 5, winner: 'Draw',
+          partyAStrengths: [], partyAWeaknesses: [],
+          partyBStrengths: [], partyBWeaknesses: [],
+          reasoning: 'Equal.', confidenceScore: 60,
+        },
+      },
+    ]
+    const result = await aggregateResults('dispute-1', mockResults)
+    expect(result.overallWinner).toBe('Draw')
+  })
+})
