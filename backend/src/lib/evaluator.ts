@@ -49,6 +49,7 @@ Respond ONLY with a valid JSON object in this exact schema (no markdown, no expl
 const PROVIDERS: LlmProvider[] = ['claude', 'gpt-4', 'gemini']
 const MAX_RETRIES = 2
 
+// Runs evaluators in parallel using Promise.allSettled — simpler and equivalent to a LangGraph fan-out for this use case
 async function callEvaluator(provider: LlmProvider, partyA: string, partyB: string): Promise<EvaluatorResult> {
   let lastError: Error | null = null
 
@@ -64,8 +65,11 @@ async function callEvaluator(provider: LlmProvider, partyA: string, partyB: stri
       const jsonMatch = raw.match(/\{[\s\S]*\}/)
       if (!jsonMatch) throw new Error(`No JSON found in evaluator response from ${provider}`)
       const output: EvaluatorOutput = JSON.parse(jsonMatch[0])
-
-      return { provider, output, tokensUsed: 0 }
+      if (typeof output.partyAScore !== 'number' || typeof output.partyBScore !== 'number') {
+        throw new Error(`Invalid evaluator output shape from ${provider}: scores must be numbers`)
+      }
+      const tokensUsed = (response as any).response_metadata?.tokenUsage?.totalTokens ?? 0
+      return { provider, output, tokensUsed }
     } catch (err) {
       lastError = err as Error
     }
