@@ -148,27 +148,27 @@
 ## Phase 6: AI Evaluation Engine
 
 ### 6.1 Backend — Evaluator Dispatcher (LangGraph)
-- [ ] Build LangGraph workflow: Dispatch → Parallel Evaluate → Aggregate
-- [ ] Implement 3 evaluator nodes (Claude, GPT-4, Gemini via OpenRouter) running in parallel
-- [ ] Use the judge prompt template from client (substitute Party A and Party B briefs)
-- [ ] Parse and validate each evaluator's JSON output against schema
-- [ ] Retry failed evaluators (up to 2x with backoff)
-- [ ] Require minimum 2 successful evaluations (MVP: 3 evaluators, need 2)
-- [ ] Store each `EvaluatorOutput` in DB
+- [x] Build LangGraph workflow: Dispatch → Parallel Evaluate → Aggregate
+- [x] Implement 3 evaluator nodes (Claude, GPT-4, Gemini via OpenRouter) running in parallel
+- [x] Use the judge prompt template from client (substitute Party A and Party B briefs)
+- [x] Parse and validate each evaluator's JSON output against schema
+- [x] Retry failed evaluators (up to 2x with backoff)
+- [x] Require minimum 2 successful evaluations (MVP: 3 evaluators, need 2)
+- [x] Store each `EvaluatorOutput` in DB
 
 ### 6.2 Backend — Aggregation Engine
-- [ ] Calculate inter-evaluator agreement score
-- [ ] Scoring algorithm: No winner = 1pt each, Slightly wins = 3pts, Strongly wins = 5pts
-- [ ] Call aggregator LLM to write narrative synthesis from all evaluator outputs
-- [ ] Build final `Opinion` JSON (executive summary, per-party analysis, comparative assessment, confidence)
-- [ ] Save Opinion to DB
-- [ ] Update dispute state to `completed`
-- [ ] Trigger notification to both parties
+- [x] Calculate inter-evaluator agreement score
+- [x] Scoring algorithm: No winner = 1pt each, Slightly wins = 3pts, Strongly wins = 5pts
+- [x] Call aggregator LLM to write narrative synthesis from all evaluator outputs
+- [x] Build final `Opinion` JSON (executive summary, per-party analysis, comparative assessment, confidence)
+- [x] Save Opinion to DB
+- [x] Update dispute state to `completed`
+- [x] Trigger notification to both parties
 
 ### 6.3 Backend — Status Tracking
-- [ ] SSE endpoint `GET /v1/disputes/:id/opinion/stream` — real-time evaluation progress
-- [ ] Events: `evaluator_complete`, `aggregation_started`, `opinion_ready`
-- [ ] `GET /v1/disputes/:id/opinion/status` — poll-based fallback
+- [x] SSE endpoint `GET /v1/disputes/:id/opinion/stream` — real-time evaluation progress
+- [x] Events: `evaluator_complete`, `aggregation_started`, `opinion_ready`
+- [x] `GET /v1/disputes/:id/opinion/status` — poll-based fallback
 
 ---
 
