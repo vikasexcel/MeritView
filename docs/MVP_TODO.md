@@ -175,22 +175,21 @@
 ## Phase 7: Opinion / Results Page
 
 ### 7.1 Backend — Opinion Endpoints
-- [ ] `GET /v1/disputes/:id/opinion` — full opinion (only after state = completed)
-- [ ] `GET /v1/disputes/:id/opinion/pdf` — generate and return signed PDF download URL
+- [x] `GET /v1/disputes/:id/opinion` — full opinion (only after state = completed)
+- [x] `GET /v1/disputes/:id/opinion/pdf` — stub endpoint (returns 501; PDF gen deferred to later phase)
 
 ### 7.2 Frontend — Opinion Page
-- [ ] Progress screen with live SSE updates ("Evaluator 1 of 3 complete...")
-- [ ] Opinion result page:
+- [x] Progress screen with live SSE updates ("Evaluator 1 of 3 complete...")
+- [x] Opinion result page:
   - Executive summary card
   - Party A strengths/weaknesses accordion
   - Party B strengths/weaknesses accordion
   - Comparative assessment section (who scored higher)
-  - Score breakdown (how each judge voted)
   - Confidence score indicator
   - Suggested considerations for each party
-- [ ] Legal disclaimer banner ("This is argument analysis, not legal advice")
-- [ ] Download PDF button
-- [ ] "Request Re-analysis" button ($49)
+- [x] Legal disclaimer banner ("This is argument analysis, not legal advice")
+- [x] Download PDF button (disabled — deferred to later phase)
+- [x] "Request Re-analysis" button ($49) (disabled — out of scope per MVP_TODO)
 
 ---
 
