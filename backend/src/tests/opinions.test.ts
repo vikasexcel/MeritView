@@ -25,11 +25,15 @@ let _counter = 2000
 function uid() { return `${Date.now()}-${++_counter}` }
 
 async function registerAndLogin(email: string) {
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     await request(app).post('/api/auth/sign-up/email').send({ email, password: 'Password123!', name: 'Test User' })
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) continue
-    await prisma.user.update({ where: { email }, data: { emailVerified: true } })
+    try {
+      await prisma.user.update({ where: { id: user.id }, data: { emailVerified: true } })
+    } catch {
+      continue
+    }
     const res = await request(app).post('/api/auth/sign-in/email').send({ email, password: 'Password123!' })
     const rawCookie = res.headers['set-cookie']
     if (rawCookie) return Array.isArray(rawCookie) ? rawCookie : [rawCookie]
@@ -59,6 +63,13 @@ async function createCompletedDispute() {
       update: { status: 'submitted', submittedAt: new Date() },
     })
     await prisma.party.update({ where: { id: party.id }, data: { briefStatus: 'submitted' } })
+  }
+
+  // Wait for dispute to be visible via Prisma connection (Neon read-after-write lag)
+  for (let i = 0; i < 10; i++) {
+    const exists = await prisma.dispute.findUnique({ where: { id: dispute.id }, select: { id: true } })
+    if (exists) break
+    await new Promise((r) => setTimeout(r, 200))
   }
 
   // Manually create opinion and set dispute to completed

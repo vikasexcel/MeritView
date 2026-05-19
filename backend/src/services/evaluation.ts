@@ -37,10 +37,18 @@ function briefToText(content: BriefContent): string {
 }
 
 export async function triggerEvaluation(disputeId: string): Promise<void> {
-  const dispute = await prisma.dispute.findUnique({
-    where: { id: disputeId },
-    include: { parties: { include: { brief: true } } },
-  })
+  // Retry to handle Neon read-after-write lag after brief submission
+  let dispute = null
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 500 * attempt))
+    dispute = await prisma.dispute.findUnique({
+      where: { id: disputeId },
+      include: { parties: { include: { brief: true } } },
+    })
+    const [partyA, partyB] = dispute?.parties ?? []
+    if (partyA?.brief && partyB?.brief) break
+    dispute = null
+  }
 
   if (!dispute) throw new Error(`Dispute ${disputeId} not found`)
 

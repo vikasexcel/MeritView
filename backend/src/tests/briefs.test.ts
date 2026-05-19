@@ -23,14 +23,18 @@ vi.mock('../lib/ai', () => ({
 const AUTH_BASE = '/api/auth'
 
 async function registerAndLogin(email: string) {
-  // Retry once: Neon serverless can fail the Account FK on cold connections
-  for (let attempt = 0; attempt < 2; attempt++) {
+  // Retry: Neon serverless can fail the Account FK on cold connections
+  for (let attempt = 0; attempt < 3; attempt++) {
     await request(app)
       .post(`${AUTH_BASE}/sign-up/email`)
       .send({ email, password: 'Password123!', name: 'Test User' })
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) continue
-    await prisma.user.update({ where: { email }, data: { emailVerified: true } })
+    try {
+      await prisma.user.update({ where: { id: user.id }, data: { emailVerified: true } })
+    } catch {
+      continue
+    }
     const res = await request(app)
       .post(`${AUTH_BASE}/sign-in/email`)
       .send({ email, password: 'Password123!' })
