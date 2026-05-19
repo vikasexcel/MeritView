@@ -1,20 +1,14 @@
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Plus, Scale } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { disputeApi } from '@/lib/disputeApi'
 
-type DisputeState = 'draft' | 'awaiting_counterparty' | 'in_progress' | 'under_analysis' | 'completed'
-
-interface Dispute {
-  id: string
-  title: string
-  category: string
-  state: DisputeState
-  createdAt: string
-}
+import type { Dispute, DisputeState } from '@/lib/disputeApi'
 
 const STATE_LABELS: Record<DisputeState, string> = {
   draft: 'Draft',
@@ -22,6 +16,8 @@ const STATE_LABELS: Record<DisputeState, string> = {
   in_progress: 'In Progress',
   under_analysis: 'Under Analysis',
   completed: 'Completed',
+  cancelled: 'Cancelled',
+  refunded: 'Refunded',
 }
 
 const STATE_VARIANTS: Record<DisputeState, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -30,6 +26,8 @@ const STATE_VARIANTS: Record<DisputeState, 'default' | 'secondary' | 'outline' |
   in_progress: 'secondary',
   under_analysis: 'default',
   completed: 'default',
+  cancelled: 'destructive',
+  refunded: 'outline',
 }
 
 function DisputeCard({ dispute }: { dispute: Dispute }) {
@@ -101,13 +99,16 @@ function EmptyState() {
   )
 }
 
-// Placeholder — Phase 4 will wire this to a real API call
-const MOCK_LOADING = false
-const MOCK_DISPUTES: Dispute[] = []
-
 export function Dashboard() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['disputes'],
+    queryFn: () => disputeApi.list().then((r) => r.data.disputes),
+  })
+
+  const disputes = data ?? []
 
   return (
     <div className="space-y-6">
@@ -122,17 +123,17 @@ export function Dashboard() {
         </Button>
       </div>
 
-      {MOCK_LOADING ? (
+      {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <DisputeCardSkeleton key={i} />
           ))}
         </div>
-      ) : MOCK_DISPUTES.length === 0 ? (
+      ) : disputes.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {MOCK_DISPUTES.map((d) => (
+          {disputes.map((d) => (
             <DisputeCard key={d.id} dispute={d} />
           ))}
         </div>

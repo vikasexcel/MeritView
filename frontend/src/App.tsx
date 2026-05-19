@@ -12,6 +12,7 @@ import { ResetPassword } from '@/pages/auth/ResetPassword'
 import { VerifyEmail } from '@/pages/auth/VerifyEmail'
 import { InvitationPage } from '@/pages/invitations/InvitationPage'
 import { Dashboard } from '@/pages/dashboard/Dashboard'
+import { Dashboard as DisputesDashboard } from '@/pages/disputes/Dashboard'
 import { CreateDispute } from '@/pages/disputes/CreateDispute'
 import { DisputeDetail } from '@/pages/disputes/DisputeDetail'
 import { BriefWriting } from '@/pages/disputes/BriefWriting'
@@ -41,7 +42,7 @@ function App() {
           <Route index element={<div className="p-6 text-muted-foreground text-sm">Settings — coming in Phase 10</div>} />
         </Route>
         <Route path="/disputes" element={<DashboardLayout />}>
-          <Route index element={<Dashboard />} />
+          <Route index element={<DisputesDashboard />} />
           <Route path="new" element={<CreateDispute />} />
           <Route path=":id" element={<DisputeDetail />} />
           <Route path=":id/parties/:partyId/brief" element={<BriefWriting />} />
