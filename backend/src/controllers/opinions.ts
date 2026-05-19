@@ -63,31 +63,40 @@ export async function streamOpinionProgress(req: Request<OpinionParams>, res: Re
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
   }
 
-  // Send current status immediately so client doesn't wait
-  const currentStatus = await getEvaluationStatus(disputeId)
-  send('status', currentStatus)
+  let timer: ReturnType<typeof setTimeout>
+  try {
+    // Send current status immediately so client doesn't wait
+    const currentStatus = await getEvaluationStatus(disputeId)
+    send('status', currentStatus)
 
-  if (currentStatus.opinionReady) {
-    send('opinion_ready', { opinionId: currentStatus.opinionId })
-    res.end()
-    return
-  }
+    if (currentStatus.opinionReady) {
+      send('opinion_ready', { opinionId: currentStatus.opinionId })
+      res.end()
+      return
+    }
 
-  const unsubscribe = subscribeToProgress(disputeId, (event) => {
-    send(event.type, event)
-    if (event.type === 'opinion_ready') {
+    const unsubscribe = subscribeToProgress(disputeId, (event) => {
+      send(event.type, event)
+      if (event.type === 'opinion_ready') {
+        clearTimeout(timer)
+        unsubscribe()
+        res.end()
+      }
+    })
+
+    req.on('close', () => {
+      unsubscribe()
+      clearTimeout(timer)
+    })
+
+    // Safety timeout — close SSE after 5 minutes
+    timer = setTimeout(() => {
       unsubscribe()
       res.end()
-    }
-  })
-
-  req.on('close', () => {
-    unsubscribe()
-  })
-
-  // Safety timeout — close SSE after 5 minutes
-  setTimeout(() => {
-    unsubscribe()
+    }, 5 * 60 * 1000)
+    timer.unref()
+  } catch {
+    res.write(`event: error\ndata: ${JSON.stringify({ error: 'internal' })}\n\n`)
     res.end()
-  }, 5 * 60 * 1000)
+  }
 }
