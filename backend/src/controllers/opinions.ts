@@ -4,7 +4,11 @@ import { prisma } from '../lib/prisma'
 import { subscribeToProgress, getEvaluationStatus } from '../services/evaluation'
 import { isDisputeParticipant } from '../services/briefs'
 
-export async function getOpinion(req: Request, res: Response) {
+interface OpinionParams {
+  id: string
+}
+
+export async function getOpinion(req: Request<OpinionParams>, res: Response) {
   const { id: disputeId } = req.params
 
   const isParticipant = await isDisputeParticipant(disputeId, req.user!.id)
@@ -28,7 +32,7 @@ export async function getOpinion(req: Request, res: Response) {
   res.json({ opinion })
 }
 
-export async function getOpinionStatus(req: Request, res: Response) {
+export async function getOpinionStatus(req: Request<OpinionParams>, res: Response) {
   const { id: disputeId } = req.params
 
   const isParticipant = await isDisputeParticipant(disputeId, req.user!.id)
@@ -41,7 +45,7 @@ export async function getOpinionStatus(req: Request, res: Response) {
   res.json(status)
 }
 
-export async function streamOpinionProgress(req: Request, res: Response) {
+export async function streamOpinionProgress(req: Request<OpinionParams>, res: Response) {
   const { id: disputeId } = req.params
 
   const isParticipant = await isDisputeParticipant(disputeId, req.user!.id)
