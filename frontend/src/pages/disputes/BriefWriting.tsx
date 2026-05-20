@@ -191,9 +191,14 @@ export function BriefWriting() {
     if (!disputeId || !partyId) return
     try {
       const result = await briefApi.submitBrief(disputeId, partyId, content)
-      setSubmitted(true)
       setShowSubmitModal(false)
-      toast.success(result.data.bothSubmitted ? 'Brief submitted! Analysis is starting.' : 'Brief submitted! Waiting for the other party.')
+      if (result.data.bothSubmitted) {
+        toast.success('Both briefs submitted! Starting analysis...')
+        navigate(`/disputes/${disputeId}/opinion`)
+      } else {
+        setSubmitted(true)
+        toast.success('Brief submitted! Waiting for the other party.')
+      }
     } catch (err: any) {
       toast.error(err?.response?.data?.error ?? 'Submission failed')
     }

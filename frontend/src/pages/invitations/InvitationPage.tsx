@@ -31,8 +31,9 @@ export function InvitationPage() {
 
   const acceptMutation = useMutation({
     mutationFn: () => disputeApi.acceptInvitation(token!),
-    onSuccess: () => {
-      setMessage('You have accepted the invitation. You can now write your brief.')
+    onSuccess: (res) => {
+      const { id: partyId, disputeId } = res.data.party
+      navigate(`/disputes/${disputeId}/parties/${partyId}/brief`)
     },
     onError: (err: any) => {
       setMessage(err?.response?.data?.error ?? 'Failed to accept invitation.')
