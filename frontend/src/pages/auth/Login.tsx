@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { signIn } from '@/lib/authClient'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 export function Login() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const setAuth = useAuthStore((s) => s.setAuth)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -40,7 +41,8 @@ export function Login() {
         },
         (data as any).token ?? ''
       )
-      navigate('/dashboard')
+      const redirect = searchParams.get('redirect')
+      navigate(redirect ? decodeURIComponent(redirect) : '/dashboard')
     }
   }
 

@@ -1,5 +1,5 @@
 // frontend/src/pages/disputes/DisputeDetail.tsx
-import { useParams, useLocation, useNavigate } from 'react-router-dom'
+import { useParams, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { disputeApi } from '@/lib/disputeApi'
 import { Badge } from '@/components/ui/badge'
@@ -44,6 +44,12 @@ export function DisputeDetail() {
   const waitingForAnalysis = data.state === 'in_progress' && myParty?.briefStatus === 'submitted'
   const isUnderAnalysis = data.state === 'under_analysis'
   const isCompleted = data.state === 'completed'
+
+  // Auto-redirect when the only next action is clear and there's no invite URL to show
+  if (!inviteUrl) {
+    if (canWriteBrief && myParty) return <Navigate to={`/disputes/${id}/parties/${myParty.id}/brief`} replace />
+    if (isUnderAnalysis || isCompleted) return <Navigate to={`/disputes/${id}/opinion`} replace />
+  }
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
