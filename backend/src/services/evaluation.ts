@@ -8,6 +8,7 @@ type EvalProgressEvent =
   | { type: 'evaluator_complete'; provider: string; index: number; total: number }
   | { type: 'aggregation_started' }
   | { type: 'opinion_ready'; opinionId: string }
+  | { type: 'evaluation_error'; message: string }
 
 // In-memory progress store keyed by disputeId
 const progressListeners = new Map<string, ((event: EvalProgressEvent) => void)[]>()
@@ -37,84 +38,108 @@ function briefToText(content: BriefContent): string {
 }
 
 export async function triggerEvaluation(disputeId: string): Promise<void> {
-  // Retry to handle Neon read-after-write lag after brief submission
-  let dispute = null
-  for (let attempt = 0; attempt < 5; attempt++) {
-    if (attempt > 0) await new Promise((r) => setTimeout(r, 500 * attempt))
-    dispute = await prisma.dispute.findUnique({
-      where: { id: disputeId },
-      include: { parties: { include: { brief: true } } },
-    })
-    const [partyA, partyB] = dispute?.parties ?? []
-    if (partyA?.brief && partyB?.brief) break
-    dispute = null
-  }
-
-  if (!dispute) throw new Error(`Dispute ${disputeId} not found`)
-
-  const [partyA, partyB] = dispute.parties
-  if (!partyA?.brief || !partyB?.brief) {
-    throw new Error(`Both parties must have submitted briefs before evaluation`)
-  }
-
-  const partyAText = briefToText(partyA.brief.content as BriefContent)
-  const partyBText = briefToText(partyB.brief.content as BriefContent)
-
-  // Run all LLM work first — no DB writes until all succeed
-  const evaluatorResults = await runEvaluators(disputeId, partyAText, partyBText)
-  const agg = await aggregateResults(disputeId, evaluatorResults)
-
-  // Commit everything atomically
-  const opinion = await prisma.$transaction(async (tx) => {
-    for (let i = 0; i < evaluatorResults.length; i++) {
-      const r = evaluatorResults[i]
-      await tx.evaluatorOutput.create({
-        data: {
-          disputeId,
-          llmProvider: r.provider,
-          structuredOutput: r.output as object,
-          promptVersion: '1.0',
-          tokensUsed: r.tokensUsed,
-          cost: 0,
-        },
+  try {
+    console.log(`[eval:${disputeId}] starting`)
+    // Retry to handle Neon read-after-write lag after brief submission
+    let dispute = null
+    for (let attempt = 0; attempt < 5; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 500 * attempt))
+      dispute = await prisma.dispute.findUnique({
+        where: { id: disputeId },
+        include: { parties: { include: { brief: true } } },
       })
-      emit(disputeId, { type: 'evaluator_complete', provider: r.provider, index: i + 1, total: evaluatorResults.length })
+      const [partyA, partyB] = dispute?.parties ?? []
+      if (partyA?.brief && partyB?.brief) break
+      dispute = null
     }
 
+    if (!dispute) throw new Error(`Dispute ${disputeId} not found`)
+
+    const [partyA, partyB] = dispute.parties
+    if (!partyA?.brief || !partyB?.brief) {
+      throw new Error(`Both parties must have submitted briefs before evaluation`)
+    }
+
+    const partyAText = briefToText(partyA.brief.content as BriefContent)
+    const partyBText = briefToText(partyB.brief.content as BriefContent)
+    console.log(`[eval:${disputeId}] briefs loaded, partyA=${partyAText.length}chars partyB=${partyBText.length}chars`)
+
+    const total = EVALUATOR_COUNT
+    let completedCount = 0
+
+    // Run evaluators one at a time so we can emit progress as each finishes
+    console.log(`[eval:${disputeId}] calling runEvaluators`)
+    const evaluatorResults = await runEvaluators(
+      disputeId,
+      partyAText,
+      partyBText,
+      (provider, index) => {
+        completedCount++
+        console.log(`[eval:${disputeId}] evaluator_complete provider=${provider} index=${completedCount}/${total}`)
+        emit(disputeId, { type: 'evaluator_complete', provider, index: completedCount, total })
+      }
+    )
+    console.log(`[eval:${disputeId}] all evaluators done, successful=${evaluatorResults.length}`)
+
     emit(disputeId, { type: 'aggregation_started' })
+    console.log(`[eval:${disputeId}] aggregating`)
+    const agg = await aggregateResults(disputeId, evaluatorResults)
+    console.log(`[eval:${disputeId}] aggregation done`)
 
-    const op = await tx.opinion.create({
-      data: {
-        disputeId,
-        executiveSummary: agg.narrative,
-        partyAAnalysis: agg.partyAAnalysis as object,
-        partyBAnalysis: agg.partyBAnalysis as object,
-        comparativeAssessment: {
-          winner: agg.overallWinner,
-          partyAPoints: agg.partyAPoints,
-          partyBPoints: agg.partyBPoints,
-        } as object,
-        confidenceScore: agg.confidenceScore,
-        aggregatorAgreement: agg.aggregatorAgreement,
-      },
+    const opinion = await prisma.$transaction(async (tx) => {
+      for (const r of evaluatorResults) {
+        await tx.evaluatorOutput.create({
+          data: {
+            disputeId,
+            llmProvider: r.provider,
+            structuredOutput: r.output as object,
+            promptVersion: '1.0',
+            tokensUsed: r.tokensUsed,
+            cost: 0,
+          },
+        })
+      }
+
+      const op = await tx.opinion.create({
+        data: {
+          disputeId,
+          executiveSummary: agg.narrative,
+          partyAAnalysis: agg.partyAAnalysis as object,
+          partyBAnalysis: agg.partyBAnalysis as object,
+          comparativeAssessment: {
+            winner: agg.overallWinner,
+            partyAPoints: agg.partyAPoints,
+            partyBPoints: agg.partyBPoints,
+          } as object,
+          confidenceScore: agg.confidenceScore,
+          aggregatorAgreement: agg.aggregatorAgreement,
+        },
+      })
+
+      await tx.dispute.update({ where: { id: disputeId }, data: { state: 'completed' } })
+
+      await tx.auditEvent.create({
+        data: {
+          eventType: 'opinion_generated',
+          resourceType: 'opinion',
+          resourceId: op.id,
+          eventData: { disputeId, winner: agg.overallWinner, confidenceScore: agg.confidenceScore },
+        },
+      })
+
+      return op
     })
 
-    await tx.dispute.update({ where: { id: disputeId }, data: { state: 'completed' } })
-
-    await tx.auditEvent.create({
-      data: {
-        eventType: 'opinion_generated',
-        resourceType: 'opinion',
-        resourceId: op.id,
-        eventData: { disputeId, winner: agg.overallWinner, confidenceScore: agg.confidenceScore },
-      },
-    })
-
-    return op
-  })
-
-  emit(disputeId, { type: 'opinion_ready', opinionId: opinion.id })
-  progressListeners.delete(disputeId)
+    console.log(`[eval:${disputeId}] opinion saved id=${opinion.id}, emitting opinion_ready`)
+    emit(disputeId, { type: 'opinion_ready', opinionId: opinion.id })
+    progressListeners.delete(disputeId)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'unknown error'
+    console.error(`[eval:${disputeId}] FAILED:`, message, err instanceof Error ? err.stack : '')
+    emit(disputeId, { type: 'evaluation_error', message })
+    progressListeners.delete(disputeId)
+    throw err
+  }
 }
 
 export async function getEvaluationStatus(disputeId: string) {

@@ -272,14 +272,14 @@ describe('POST /brief/submit', () => {
     expect(party?.briefStatus).toBe('submitted')
   })
 
-  it('returns 400 when brief is under 500 words', async () => {
+  it('allows submission when brief is under 500 words', async () => {
     const res = await request(app)
       .post(`/v1/disputes/${ctx.disputeId}/parties/${ctx.initiatorPartyId}/brief/submit`)
       .set('Cookie', ctx.initiatorCookie)
-      .send({ content: { facts: 'Too short.' } })
+      .send({ content: { facts: 'A short but valid brief for testing.' } })
 
-    expect(res.status).toBe(400)
-    expect(res.body.error).toMatch(/500/)
+    expect(res.status).toBe(200)
+    expect(res.body.brief.status).toBe('submitted')
   })
 
   it('returns 400 when brief exceeds 5000 words', async () => {

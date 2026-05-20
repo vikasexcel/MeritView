@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import type { ComparativeAssessment } from '@/lib/disputeApi'
 
 // ---- Progress screen -------------------------------------------------------
 
@@ -57,9 +58,16 @@ function ProgressScreen({ state }: { state: StreamState }) {
       </Card>
 
       {state.phase === 'error' && (
-        <p className="text-sm text-destructive text-center">
-          Connection lost. Please refresh to check the status.
-        </p>
+        <div className="text-center space-y-3">
+          <p className="text-sm text-destructive">
+            {(state as any).message
+              ? `Evaluation failed: ${(state as any).message}`
+              : 'Connection lost. Please refresh to check the status.'}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+            Refresh
+          </Button>
+        </div>
       )}
     </div>
   )
@@ -87,7 +95,6 @@ function PartySection({ label, analysis }: { label: string; analysis: PartyAnaly
         <CardContent className="space-y-4 pt-0">
           <Section heading="Strengths" items={analysis.strengths} variant="positive" />
           <Section heading="Weaknesses" items={analysis.weaknesses} variant="negative" />
-          <Section heading="Key Arguments" items={analysis.keyArguments} variant="neutral" />
           <Section heading="Suggested Considerations" items={analysis.suggestedConsiderations} variant="neutral" />
         </CardContent>
       )}
@@ -120,6 +127,23 @@ function Section({
           </li>
         ))}
       </ul>
+    </div>
+  )
+}
+
+// ---- Comparative assessment summary ----------------------------------------
+
+function AssessmentSummary({ assessment }: { assessment: ComparativeAssessment }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">Winner:</span>
+        <Badge variant="secondary">{assessment.winner}</Badge>
+      </div>
+      <div className="flex gap-4 text-sm">
+        <span><span className="text-muted-foreground">Party A:</span> {assessment.partyAPoints} pts</span>
+        <span><span className="text-muted-foreground">Party B:</span> {assessment.partyBPoints} pts</span>
+      </div>
     </div>
   )
 }
@@ -171,11 +195,11 @@ function ResultsPage({ opinion }: { opinion: Opinion }) {
           <CardTitle>Comparative Assessment</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm leading-relaxed">{opinion.comparativeAssessment}</p>
+          <AssessmentSummary assessment={opinion.comparativeAssessment} />
           <ConfidenceBar score={opinion.confidenceScore} />
           <div>
             <p className="text-sm text-muted-foreground font-medium mb-1">Evaluator agreement</p>
-            <p className="text-sm">{opinion.aggregatorAgreement}</p>
+            <p className="text-sm">{Math.round(Number(opinion.aggregatorAgreement) * 100)}%</p>
           </div>
         </CardContent>
       </Card>

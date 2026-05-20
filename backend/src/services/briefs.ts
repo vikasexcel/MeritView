@@ -56,9 +56,6 @@ export async function getBrief(partyId: string) {
 export async function submitBrief(partyId: string, disputeId: string, content: BriefContent) {
   const wordCount = countWords(content)
 
-  if (wordCount < 500) {
-    return { error: 'min_words' as const }
-  }
   if (wordCount > 5000) {
     return { error: 'max_words' as const }
   }
@@ -110,9 +107,10 @@ export async function submitBrief(partyId: string, disputeId: string, content: B
       },
     })
     // Fire evaluation asynchronously — do not await so HTTP response is not delayed
+    console.log(`[briefs] both submitted, triggering evaluation for dispute ${disputeId}`)
     import('../services/evaluation').then(({ triggerEvaluation }) =>
       triggerEvaluation(disputeId).catch((err) =>
-        console.error(`[evaluation] failed for dispute ${disputeId}:`, err)
+        console.error(`[briefs] triggerEvaluation crashed for ${disputeId}:`, err)
       )
     )
   }

@@ -74,10 +74,6 @@ export async function submitBrief(req: Request<BriefParams>, res: Response) {
   const result = await briefService.submitBrief(partyId, disputeId, content)
 
   if ('error' in result) {
-    if (result.error === 'min_words') {
-      res.status(400).json({ error: 'Brief must be at least 500 words' })
-      return
-    }
     if (result.error === 'max_words') {
       res.status(400).json({ error: 'Brief exceeds 5000 word limit' })
       return

@@ -22,7 +22,7 @@ Guidelines:
 - Ask one focused question at a time to help them build each section
 - Do not take sides or make legal judgments
 - Encourage specificity: dates, amounts, communications, agreements
-- Remind them that word limits apply: 500–2000 words recommended, 5000 max
+- Keep briefs concise; there is a 5000-word maximum across all sections
 - Be neutral, professional, and constructive
 - After they provide information, suggest how it might fit into their brief sections`
 
@@ -55,6 +55,7 @@ export function createLlm(provider: LlmProvider, streaming = false) {
     streaming,
     openAIApiKey: apiKey,
     configuration: {
+      apiKey,
       baseURL: 'https://openrouter.ai/api/v1',
       defaultHeaders: {
         'HTTP-Referer': process.env.APP_URL ?? 'http://localhost:3000',

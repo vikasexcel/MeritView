@@ -59,9 +59,11 @@ export async function getOpinionPdf(req: Request<OpinionParams>, res: Response) 
 
 export async function streamOpinionProgress(req: Request<OpinionParams>, res: Response) {
   const { id: disputeId } = req.params
+  console.log(`[sse:${disputeId}] client connected user=${req.user!.id}`)
 
   const isParticipant = await isDisputeParticipant(disputeId, req.user!.id)
   if (!isParticipant) {
+    console.log(`[sse:${disputeId}] forbidden`)
     res.status(403).json({ error: 'forbidden' })
     return
   }
@@ -72,6 +74,7 @@ export async function streamOpinionProgress(req: Request<OpinionParams>, res: Re
   res.flushHeaders()
 
   const send = (event: string, data: object) => {
+    console.log(`[sse:${disputeId}] sending event=${event}`, data)
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
   }
 
@@ -79,6 +82,7 @@ export async function streamOpinionProgress(req: Request<OpinionParams>, res: Re
   try {
     // Send current status immediately so client doesn't wait
     const currentStatus = await getEvaluationStatus(disputeId)
+    console.log(`[sse:${disputeId}] currentStatus=`, currentStatus)
     send('status', currentStatus)
 
     if (currentStatus.opinionReady) {
@@ -89,7 +93,7 @@ export async function streamOpinionProgress(req: Request<OpinionParams>, res: Re
 
     const unsubscribe = subscribeToProgress(disputeId, (event) => {
       send(event.type, event)
-      if (event.type === 'opinion_ready') {
+      if (event.type === 'opinion_ready' || event.type === 'evaluation_error') {
         clearTimeout(timer)
         unsubscribe()
         res.end()

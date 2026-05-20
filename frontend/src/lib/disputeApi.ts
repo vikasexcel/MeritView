@@ -65,8 +65,13 @@ export const disputeApi = {
 export interface PartyAnalysis {
   strengths: string[]
   weaknesses: string[]
-  keyArguments: string[]
   suggestedConsiderations: string[]
+}
+
+export interface ComparativeAssessment {
+  winner: string
+  partyAPoints: number
+  partyBPoints: number
 }
 
 export interface Opinion {
@@ -75,9 +80,9 @@ export interface Opinion {
   executiveSummary: string
   partyAAnalysis: PartyAnalysis
   partyBAnalysis: PartyAnalysis
-  comparativeAssessment: string
+  comparativeAssessment: ComparativeAssessment
   confidenceScore: number
-  aggregatorAgreement: string
+  aggregatorAgreement: number
   deliveredAt: string
 }
 

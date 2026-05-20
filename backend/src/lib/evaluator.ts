@@ -60,8 +60,10 @@ async function callEvaluator(provider: LlmProvider, partyA: string, partyB: stri
         await new Promise((r) => setTimeout(r, 1000 * attempt))
       }
 
+      console.log(`[evaluator:${provider}] attempt=${attempt} calling LLM`)
       const llm = createLlm(provider)
       const response = await llm.invoke([new HumanMessage(JUDGE_PROMPT(partyA, partyB))])
+      console.log(`[evaluator:${provider}] LLM responded`)
       const raw = typeof response.content === 'string' ? response.content : JSON.stringify(response.content)
       const jsonMatch = raw.match(/\{[\s\S]*\}/)
       if (!jsonMatch) throw new Error(`No JSON found in evaluator response from ${provider}`)
@@ -72,6 +74,7 @@ async function callEvaluator(provider: LlmProvider, partyA: string, partyB: stri
       const tokensUsed = (response as any).response_metadata?.tokenUsage?.totalTokens ?? 0
       return { provider, output, tokensUsed }
     } catch (err) {
+      console.error(`[evaluator:${provider}] attempt=${attempt} error:`, (err as Error).message)
       lastError = err as Error
     }
   }
@@ -82,10 +85,18 @@ async function callEvaluator(provider: LlmProvider, partyA: string, partyB: stri
 export async function runEvaluators(
   _disputeId: string,
   partyABrief: string,
-  partyBBrief: string
+  partyBBrief: string,
+  onComplete?: (provider: LlmProvider, index: number) => void
 ): Promise<EvaluatorResult[]> {
+  let completedIndex = 0
   const results = await Promise.allSettled(
-    PROVIDERS.map((provider) => callEvaluator(provider, partyABrief, partyBBrief))
+    PROVIDERS.map((provider) =>
+      callEvaluator(provider, partyABrief, partyBBrief).then((result) => {
+        const index = ++completedIndex
+        onComplete?.(provider, index)
+        return result
+      })
+    )
   )
 
   const successful = results

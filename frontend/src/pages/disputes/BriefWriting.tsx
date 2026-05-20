@@ -208,7 +208,7 @@ export function BriefWriting() {
     })
   }
 
-  const wordCountColor = wordCount < 500 ? 'text-destructive' : wordCount > 4500 ? 'text-orange-500' : 'text-muted-foreground'
+  const wordCountColor = wordCount > 4500 ? 'text-orange-500' : 'text-muted-foreground'
 
   if (submitted) {
     return (
@@ -294,7 +294,6 @@ export function BriefWriting() {
             <h2 className="font-semibold text-sm">Your Brief</h2>
             <span className={`text-xs ${wordCountColor}`}>
               {wordCount} words
-              {wordCount < 500 && ' (min 500)'}
               {wordCount > 5000 && ' (over limit!)'}
             </span>
           </div>
@@ -306,7 +305,7 @@ export function BriefWriting() {
             <Button
               size="sm"
               onClick={() => setShowSubmitModal(true)}
-              disabled={wordCount < 500 || wordCount > 5000}
+              disabled={wordCount > 5000}
             >
               Submit Brief
             </Button>
