@@ -4,7 +4,7 @@ import { HumanMessage, SystemMessage, AIMessage, BaseMessage } from '@langchain/
 export type LlmProvider = 'claude' | 'gpt-4' | 'gemini'
 
 const OPENROUTER_MODELS: Record<LlmProvider, string> = {
-  claude: 'anthropic/claude-3.5-sonnet',
+  claude: 'anthropic/claude-sonnet-4.6',
   'gpt-4': 'openai/gpt-4o',
   gemini: 'google/gemini-2.0-flash-001',
 }
