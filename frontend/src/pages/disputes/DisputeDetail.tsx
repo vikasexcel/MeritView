@@ -34,6 +34,13 @@ export function DisputeDetail() {
     queryKey: ['dispute', id],
     queryFn: () => disputeApi.get(id!).then((r) => r.data.dispute),
     enabled: !!id,
+    refetchInterval: (query) => {
+      const d = query.state.data
+      if (!d) return false
+      // Keep polling while waiting for counterparty or waiting for analysis to complete
+      if (d.state === 'awaiting_counterparty' || d.state === 'in_progress' || d.state === 'under_analysis') return 3000
+      return false
+    },
   })
 
   if (isLoading) return <div className="p-6 text-muted-foreground text-sm">Loading...</div>

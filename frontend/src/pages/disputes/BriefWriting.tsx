@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
-import { briefApi, type BriefContent, type LlmProvider } from '@/lib/disputeApi'
+import { briefApi, disputeApi, type BriefContent, type LlmProvider } from '@/lib/disputeApi'
 import { useAuthStore } from '@/store/authStore'
 
 const SECTIONS: Array<{ key: keyof BriefContent; label: string; hint: string }> = [
@@ -69,12 +69,26 @@ export function BriefWriting() {
     retry: false,
   })
 
+  // Poll dispute state after brief is submitted — redirect when both briefs are in
+  const { data: disputeData } = useQuery({
+    queryKey: ['dispute-brief-watch', disputeId],
+    queryFn: () => disputeApi.get(disputeId!).then((r) => r.data.dispute),
+    enabled: !!disputeId && submitted,
+    refetchInterval: submitted ? 3000 : false,
+  })
+
   useEffect(() => {
     if (briefData) {
       setContent(briefData.content)
       if (briefData.status === 'submitted') setSubmitted(true)
     }
   }, [briefData])
+
+  useEffect(() => {
+    if (disputeData && (disputeData.state === 'under_analysis' || disputeData.state === 'completed')) {
+      navigate(`/disputes/${disputeId}/opinion`)
+    }
+  }, [disputeData, disputeId, navigate])
 
   // Start session on mount
   useEffect(() => {
