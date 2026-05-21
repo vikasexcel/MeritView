@@ -52,10 +52,9 @@ export function DisputeDetail() {
   const isUnderAnalysis = data.state === 'under_analysis'
   const isCompleted = data.state === 'completed'
 
-  // Auto-redirect when the only next action is clear and there's no invite URL to show
-  if (!inviteUrl) {
-    if (canWriteBrief && myParty) return <Navigate to={`/disputes/${id}/parties/${myParty.id}/brief`} replace />
-    if (isUnderAnalysis || isCompleted) return <Navigate to={`/disputes/${id}/opinion`} replace />
+  // Auto-redirect to brief writing when that's the only next action and there's no invite URL to show
+  if (!inviteUrl && canWriteBrief && myParty) {
+    return <Navigate to={`/disputes/${id}/parties/${myParty.id}/brief`} replace />
   }
 
   return (

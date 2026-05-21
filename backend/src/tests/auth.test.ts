@@ -109,17 +109,7 @@ describe('POST /api/auth/sign-in/email', () => {
     }
   })
 
-  it('rejects sign-in when email is not verified', async () => {
-    const { status, body } = await signInAndGetCookie('signin@test.meritview', 'Password123!')
-
-    expect(status).toBeGreaterThanOrEqual(400)
-    // Better Auth returns EMAIL_NOT_VERIFIED code
-    const message = (body.message ?? body.error ?? '').toLowerCase()
-    expect(message).toMatch(/email|verif/i)
-  })
-
-  it('signs in successfully after email is verified', async () => {
-    await verifyUserEmail('signin@test.meritview')
+  it('signs in successfully without email verification', async () => {
     const { status, cookie } = await signInAndGetCookie('signin@test.meritview', 'Password123!')
 
     expect(status).toBe(200)

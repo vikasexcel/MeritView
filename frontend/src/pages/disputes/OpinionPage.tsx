@@ -230,14 +230,30 @@ export function OpinionPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  const streamState = useOpinionStream(id!, true)
-  const isReady = streamState.phase === 'ready'
+  const { data: statusData, isLoading: statusLoading } = useQuery({
+    queryKey: ['opinion-status', id],
+    queryFn: () => opinionApi.getStatus(id!).then((r) => r.data),
+    enabled: !!id,
+  })
+
+  const alreadyReady = statusData?.opinionReady === true
+  const streamState = useOpinionStream(id!, !alreadyReady && !statusLoading)
+  const isReady = alreadyReady || streamState.phase === 'ready'
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['opinion', id],
     queryFn: () => opinionApi.get(id!).then((r) => r.data.opinion),
     enabled: isReady,
   })
+
+  if (statusLoading) {
+    return (
+      <div className="p-6 max-w-2xl mx-auto space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    )
+  }
 
   if (!isReady) {
     return (
