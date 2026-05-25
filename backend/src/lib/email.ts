@@ -159,3 +159,31 @@ export async function sendAnalysisStartedEmail(to: string, name: string, dispute
     console.error('[Nodemailer] Failed to send analysis started email:', error)
   }
 }
+
+export async function sendOpinionReadyEmail(
+  to: string,
+  name: string,
+  disputeTitle: string,
+  opinionUrl: string
+) {
+  try {
+    await transporter.sendMail({
+      from: FROM,
+      to,
+      subject: `Your opinion is ready on ${APP_NAME}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+          <h2 style="color:#1a1a1a">Opinion ready</h2>
+          <p style="color:#444">Hi ${name},</p>
+          <p style="color:#444">The AI evaluation for <strong>${disputeTitle}</strong> is complete. Your opinion is now available to view.</p>
+          <a href="${opinionUrl}" style="display:inline-block;padding:12px 24px;background:#1a1a1a;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;margin:16px 0">
+            View Opinion
+          </a>
+          <p style="color:#888;font-size:13px">This is argument analysis, not legal advice.</p>
+        </div>
+      `,
+    })
+  } catch (error) {
+    console.error('[Nodemailer] Failed to send opinion ready email:', error)
+  }
+}

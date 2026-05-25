@@ -16,6 +16,7 @@ import {
   sendDisputeConfirmationEmail,
   sendCounterpartyAcceptedEmail,
   sendAnalysisStartedEmail,
+  sendOpinionReadyEmail,
 } from '../lib/email'
 
 const mockSendMail = (nodemailer as unknown as { createTransport: () => { sendMail: ReturnType<typeof vi.fn> } })
@@ -294,6 +295,61 @@ describe('sendAnalysisStartedEmail', () => {
 
     await expect(
       sendAnalysisStartedEmail('fail@example.com', 'Alice', 'Dispute')
+    ).resolves.not.toThrow()
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Nodemailer'), expect.anything())
+
+    consoleSpy.mockRestore()
+  })
+})
+
+describe('sendOpinionReadyEmail', () => {
+  beforeEach(() => mockSendMail.mockClear())
+
+  it('calls sendMail with correct to address and subject', async () => {
+    await sendOpinionReadyEmail(
+      'alice@example.com',
+      'Alice',
+      'Contract Dispute',
+      'https://app.meritview.com/disputes/d1/opinion'
+    )
+
+    expect(mockSendMail).toHaveBeenCalledOnce()
+    const call = mockSendMail.mock.calls[0][0]
+    expect(call.to).toBe('alice@example.com')
+    expect(call.subject).toMatch(/opinion/i)
+  })
+
+  it('includes the opinion URL in the HTML body', async () => {
+    const url = 'https://app.meritview.com/disputes/d1/opinion'
+    await sendOpinionReadyEmail('alice@example.com', 'Alice', 'Contract Dispute', url)
+
+    const call = mockSendMail.mock.calls[0][0]
+    expect(call.html).toContain(url)
+  })
+
+  it('sends a from address', async () => {
+    await sendOpinionReadyEmail(
+      'alice@example.com',
+      'Alice',
+      'Contract Dispute',
+      'https://app.meritview.com/disputes/d1/opinion'
+    )
+
+    const call = mockSendMail.mock.calls[0][0]
+    expect(call.from).toBeTruthy()
+  })
+
+  it('logs error and does not throw when sendMail throws', async () => {
+    mockSendMail.mockRejectedValueOnce(new Error('SMTP error'))
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await expect(
+      sendOpinionReadyEmail(
+        'fail@example.com',
+        'Alice',
+        'Dispute',
+        'https://example.com/disputes/fail/opinion'
+      )
     ).resolves.not.toThrow()
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Nodemailer'), expect.anything())
 
