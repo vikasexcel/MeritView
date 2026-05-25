@@ -19,6 +19,10 @@ export async function createCheckoutSession(req: Request, res: Response) {
     res.status(400).json({ error: 'summary must be at least 10 characters' })
     return
   }
+  if (summary.trim().length > 500) {
+    res.status(400).json({ error: 'summary must be 500 characters or less' })
+    return
+  }
   if (!counterpartyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(counterpartyEmail)) {
     res.status(400).json({ error: 'invalid counterparty email' })
     return

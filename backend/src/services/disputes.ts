@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma'
 import { DisputeCategory } from '@prisma/client'
 import crypto from 'crypto'
+import { createRefund } from './payments'
 
 export interface CreateDisputeInput {
   title: string
@@ -149,6 +150,10 @@ export async function declineInvitation(token: string, userId?: string) {
       },
     }),
   ])
+
+  createRefund(party.disputeId).catch((err) =>
+    console.error('[declineInvitation] Failed to create refund:', err)
+  )
 
   return { ok: true }
 }

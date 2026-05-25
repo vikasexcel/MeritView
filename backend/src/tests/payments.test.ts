@@ -352,3 +352,58 @@ describe('GET /v1/payments', () => {
     expect(res.body.payments).toEqual([])
   })
 })
+
+// ──────────────────────────────────────────────────────────
+// createRefund service
+// ──────────────────────────────────────────────────────────
+describe('createRefund service', () => {
+  it('updates payment status to refunded and calls stripe.refunds.create', async () => {
+    const user = await prisma.user.findFirst({ where: { email: 'refund-test@test.meritview' } })
+      ?? await prisma.user.create({
+        data: {
+          email: 'refund-test@test.meritview',
+          name: 'Refund Test User',
+          emailVerified: true,
+        },
+      })
+
+    // Create a dispute and a succeeded payment linked to it
+    const dispute = await prisma.dispute.create({
+      data: {
+        title: 'Refund Test Dispute',
+        category: 'contract',
+        summary: 'Summary for refund test.',
+        initiatorId: user.id,
+        state: 'cancelled',
+        parties: {
+          create: [{ userId: user.id, role: 'initiator', invitationStatus: 'accepted' }],
+        },
+      },
+    })
+
+    const payment = await prisma.payment.create({
+      data: {
+        userId: user.id,
+        disputeId: dispute.id,
+        amountUsd: 99,
+        status: 'succeeded',
+        stripeSessionId: 'cs_test_refund_001',
+        stripePaymentIntentId: 'pi_test_refund_001',
+      },
+    })
+
+    vi.mocked(stripe.refunds.create).mockResolvedValue({ id: 're_test_001' } as any)
+
+    const { createRefund } = await import('../services/payments')
+    await createRefund(dispute.id)
+
+    const updatedPayment = await prisma.payment.findUnique({ where: { id: payment.id } })
+    expect(updatedPayment!.status).toBe('refunded')
+    expect(stripe.refunds.create).toHaveBeenCalledWith({ payment_intent: 'pi_test_refund_001' })
+  })
+
+  it('throws if no succeeded payment found for dispute', async () => {
+    const { createRefund } = await import('../services/payments')
+    await expect(createRefund('nonexistent-dispute-id')).rejects.toThrow('No succeeded payment found')
+  })
+})

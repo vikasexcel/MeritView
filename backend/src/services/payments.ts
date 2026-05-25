@@ -19,7 +19,7 @@ export async function createCheckoutSession(userId: string, formData: CheckoutFo
   const appUrl = process.env.APP_URL ?? 'http://localhost:5173'
 
   const session = await stripe.checkout.sessions.create({
-    ui_mode: 'custom',
+    ui_mode: 'custom' as any,
     mode: 'payment',
     line_items: [
       {
@@ -126,7 +126,7 @@ async function handleSessionCompleted(session: any) {
           actorId: meta.userId,
           resourceType: 'payment',
           resourceId: payment.id,
-          eventData: { stripeSessionId: session.id, amountUsd: 99 },
+          eventData: { stripeSessionId: session.id, amountUsd: STANDARD_AMOUNT_CENTS / 100 },
         },
         {
           eventType: 'dispute_created',
@@ -154,7 +154,10 @@ export async function createRefund(disputeId: string) {
   })
   if (!payment) throw new Error('No succeeded payment found for dispute')
 
-  await stripe.refunds.create({ payment_intent: payment.stripePaymentIntentId! })
+  if (!payment.stripePaymentIntentId) {
+    throw new Error('No payment_intent on record — cannot refund')
+  }
+  await stripe.refunds.create({ payment_intent: payment.stripePaymentIntentId })
 
   await prisma.payment.update({
     where: { id: payment.id },

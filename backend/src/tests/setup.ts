@@ -38,6 +38,11 @@ async function cleanTestData() {
     )
   `
   await prisma.$executeRaw`
+    DELETE FROM "Payment" WHERE "userId" IN (
+      SELECT id FROM "User" WHERE email LIKE '%@test.meritview'
+    )
+  `
+  await prisma.$executeRaw`
     DELETE FROM "Dispute" WHERE "initiatorId" IN (
       SELECT id FROM "User" WHERE email LIKE '%@test.meritview'
     )
