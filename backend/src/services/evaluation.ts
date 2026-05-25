@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma'
 import { runEvaluators, EVALUATOR_COUNT } from '../lib/evaluator'
 import { aggregateResults } from '../lib/aggregator'
 import { BriefContent } from './briefs'
+import { sendOpinionReadyEmail } from '../lib/email'
 
 type EvalProgressEvent =
   | { type: 'evaluator_complete'; provider: string; index: number; total: number }
@@ -132,6 +133,26 @@ export async function triggerEvaluation(disputeId: string): Promise<void> {
 
     console.log(`[eval:${disputeId}] opinion saved id=${opinion.id}, emitting opinion_ready`)
     emit(disputeId, { type: 'opinion_ready', opinionId: opinion.id })
+
+    // Send opinion ready emails to both parties
+    const disputeWithParties = await prisma.dispute.findUnique({
+      where: { id: disputeId },
+      include: { parties: { include: { user: { select: { email: true, name: true } } } } },
+    })
+    if (disputeWithParties) {
+      const appUrl = process.env.APP_URL || 'http://localhost:5173'
+      for (const p of disputeWithParties.parties) {
+        if (p.user) {
+          sendOpinionReadyEmail(
+            p.user.email,
+            p.user.name ?? 'there',
+            disputeWithParties.title,
+            `${appUrl}/disputes/${disputeId}/opinion`
+          ).catch((err) => console.error('[triggerEvaluation] Failed to send opinion ready email:', err))
+        }
+      }
+    }
+
     progressListeners.delete(disputeId)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown error'

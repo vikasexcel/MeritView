@@ -16,6 +16,7 @@ vi.mock('../lib/email', () => ({
 
 import * as emailLib from '../lib/email'
 import { submitBrief } from '../services/briefs'
+import { triggerEvaluation } from '../services/evaluation'
 
 const AUTH_BASE = '/api/auth'
 
@@ -169,5 +170,93 @@ describe('submitBrief — analysis started email', () => {
     const toAddresses = calls.map((c: unknown[]) => c[0])
     expect(toAddresses).toContain(initiatorEmail)
     expect(toAddresses).toContain(respondentEmail)
+  })
+})
+
+describe('triggerEvaluation — opinion ready email', () => {
+  it('calls sendOpinionReadyEmail for both parties after opinion is saved', async () => {
+    vi.clearAllMocks()
+
+    // Mock the evaluator and aggregator to avoid real LLM calls
+    vi.mock('../lib/evaluator', () => ({
+      EVALUATOR_COUNT: 1,
+      runEvaluators: vi.fn().mockResolvedValue([
+        {
+          provider: 'mock',
+          tokensUsed: 0,
+          output: {
+            partyAScore: 7,
+            partyBScore: 5,
+            partyAStrengths: ['clear'],
+            partyAWeaknesses: ['brief'],
+            partyBStrengths: ['concise'],
+            partyBWeaknesses: ['vague'],
+            partyASuggestedConsiderations: [],
+            partyBSuggestedConsiderations: [],
+            reasoning: 'mock',
+          },
+        },
+      ]),
+    }))
+
+    vi.mock('../lib/aggregator', () => ({
+      aggregateResults: vi.fn().mockResolvedValue({
+        partyAPoints: 5,
+        partyBPoints: 3,
+        overallWinner: 'Party A',
+        confidenceScore: 80,
+        aggregatorAgreement: 0.9,
+        narrative: 'Mock narrative',
+        partyAAnalysis: { strengths: ['clear'], weaknesses: [], suggestedConsiderations: [] },
+        partyBAnalysis: { strengths: [], weaknesses: ['vague'], suggestedConsiderations: [] },
+      }),
+    }))
+
+    // Create two users and a dispute with submitted briefs
+    const userAEmail = 'notif-eval-a@test.meritview'
+    const userBEmail = 'notif-eval-b@test.meritview'
+    await request(app).post(`${AUTH_BASE}/sign-up/email`).send({ email: userAEmail, password: 'Password123!', name: 'Eval A' })
+    await request(app).post(`${AUTH_BASE}/sign-up/email`).send({ email: userBEmail, password: 'Password123!', name: 'Eval B' })
+
+    const userA = await prisma.user.findUnique({ where: { email: userAEmail } })
+    const userB = await prisma.user.findUnique({ where: { email: userBEmail } })
+    expect(userA).toBeTruthy()
+    expect(userB).toBeTruthy()
+
+    const dispute = await prisma.dispute.create({
+      data: {
+        title: 'Opinion Email Dispute',
+        category: 'contract',
+        summary: 'Summary for opinion email test.',
+        state: 'under_analysis',
+        initiatorId: userA!.id,
+        parties: {
+          create: [
+            { userId: userA!.id, role: 'initiator', invitationStatus: 'accepted', briefStatus: 'submitted' },
+            { userId: userB!.id, role: 'respondent', invitationStatus: 'accepted', briefStatus: 'submitted' },
+          ],
+        },
+      },
+      include: { parties: true },
+    })
+
+    const briefContent = { facts: 'Facts', position: 'Position', desiredOutcome: 'Settlement' }
+    for (const p of dispute.parties) {
+      await prisma.brief.create({
+        data: { partyId: p.id, disputeId: dispute.id, content: briefContent, wordCount: 10, status: 'submitted', submittedAt: new Date() },
+      })
+    }
+
+    await triggerEvaluation(dispute.id)
+
+    // Give fire-and-forget a tick to settle
+    await new Promise((r) => setTimeout(r, 100))
+
+    const calls = (emailLib.sendOpinionReadyEmail as ReturnType<typeof vi.fn>).mock.calls
+    const toAddresses = calls.map((c: unknown[]) => c[0])
+    // At least 2 calls; previous test's background eval may also fire emails
+    expect(calls.length).toBeGreaterThanOrEqual(2)
+    expect(toAddresses).toContain(userAEmail)
+    expect(toAddresses).toContain(userBEmail)
   })
 })
