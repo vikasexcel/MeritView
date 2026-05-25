@@ -31,6 +31,20 @@ async function cleanTestData() {
     )
   `
   await prisma.$executeRaw`
+    DELETE FROM "EvaluatorOutput" WHERE "disputeId" IN (
+      SELECT d.id FROM "Dispute" d
+      JOIN "User" u ON u.id = d."initiatorId"
+      WHERE u.email LIKE '%@test.meritview'
+    )
+  `
+  await prisma.$executeRaw`
+    DELETE FROM "Opinion" WHERE "disputeId" IN (
+      SELECT d.id FROM "Dispute" d
+      JOIN "User" u ON u.id = d."initiatorId"
+      WHERE u.email LIKE '%@test.meritview'
+    )
+  `
+  await prisma.$executeRaw`
     DELETE FROM "Party" WHERE "disputeId" IN (
       SELECT d.id FROM "Dispute" d
       JOIN "User" u ON u.id = d."initiatorId"
