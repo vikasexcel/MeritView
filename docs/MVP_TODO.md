@@ -213,11 +213,11 @@
 
 ## Phase 9: Notifications & Email
 
-- [ ] Email on dispute creation — confirmation to initiator
-- [ ] Email invitation to counterparty (with invite link)
-- [ ] Email when counterparty accepts
-- [ ] Email when both briefs submitted and analysis begins
-- [ ] Email to both parties when opinion is ready
+- [x] Email on dispute creation — confirmation to initiator
+- [x] Email invitation to counterparty (with invite link)
+- [x] Email when counterparty accepts
+- [x] Email when both briefs submitted and analysis begins
+- [x] Email to both parties when opinion is ready
 - [ ] In-app notification bell (optional MVP stretch)
 
 ---
