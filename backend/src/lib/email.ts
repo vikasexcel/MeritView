@@ -139,3 +139,23 @@ export async function sendCounterpartyAcceptedEmail(
     console.error('[Nodemailer] Failed to send counterparty accepted email:', error)
   }
 }
+
+export async function sendAnalysisStartedEmail(to: string, name: string, disputeTitle: string) {
+  try {
+    await transporter.sendMail({
+      from: FROM,
+      to,
+      subject: `Analysis has begun for your dispute on ${APP_NAME}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+          <h2 style="color:#1a1a1a">Analysis in progress</h2>
+          <p style="color:#444">Hi ${name},</p>
+          <p style="color:#444">Both parties have submitted their briefs for <strong>${disputeTitle}</strong>. Our AI evaluators are now analysing the submissions. You'll be notified when the opinion is ready.</p>
+          <p style="color:#888;font-size:13px">This usually takes a few minutes.</p>
+        </div>
+      `,
+    })
+  } catch (error) {
+    console.error('[Nodemailer] Failed to send analysis started email:', error)
+  }
+}
