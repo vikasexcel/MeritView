@@ -104,7 +104,7 @@
 - [x] Multi-step form: Step 1 — Dispute title + category (contract / small claims / partnership)
 - [x] Multi-step form: Step 2 — Summary + estimated stakes
 - [x] Multi-step form: Step 3 — Counterparty email + name
-- [ ] Multi-step form: Step 4 — Choose pricing tier + Stripe payment *(deferred to Phase 8)*
+- [x] Multi-step form: Step 4 — Choose pricing tier + Stripe payment *(Phase 8)*
 - [x] Form progress indicator (step 1 of 4)
 - [x] Form validation (required fields, word limits)
 - [x] Success page after dispute created (show invitation link)
@@ -193,21 +193,21 @@
 
 ---
 
-## Phase 8: Payments (Stripe)
+## Phase 8: Payments (Stripe) ✅ COMPLETE
 
 ### 8.1 Backend — Payment Endpoints
-- [ ] `POST /v1/disputes` — create Stripe PaymentIntent on dispute creation
-- [ ] `POST /v1/disputes/:id/payment/confirm` — confirm payment after Stripe client confirmation
-- [ ] Webhook handler `POST /v1/webhooks/stripe` — handle payment success/failure events
-- [ ] Refund logic — trigger on invitation decline or evaluation failure
-- [ ] `POST /v1/disputes/:id/refund-request` — manual refund request
+- [x] Checkout Session (`POST /v1/payments/checkout-session`) — embedded Payment Element, webhook-first dispute creation
+- [x] Session status polling (`GET /v1/payments/session/:id/status`)
+- [x] Webhook handler `POST /v1/webhooks/stripe` — creates dispute + payment atomically on `checkout.session.completed`
+- [x] Refund logic — triggered automatically on invitation decline
+- [x] List payments (`GET /v1/payments`) — billing history
 
 ### 8.2 Frontend — Payment
-- [ ] Stripe Elements integration on dispute creation step 4
-- [ ] Payment confirmation page
-- [ ] Payment success → redirect to brief writing page
-- [ ] Payment failure → error message with retry
-- [ ] Billing history page (`/settings/billing`)
+- [x] Stripe Elements integration on dispute creation step 4 (embedded Payment Element, `ui_mode: 'custom'`)
+- [x] PaymentSuccess polling page (`/payment/success`) — polls session status, 3s countdown redirect
+- [x] Payment success → redirect to dispute detail page
+- [x] Payment failure → error message with dashboard link
+- [x] Billing history page (`/settings/billing`)
 
 ---
 
