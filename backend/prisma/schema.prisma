@@ -238,16 +238,17 @@ model Opinion {
 
 model Payment {
   id                    String        @id @default(cuid())
-  disputeId             String
+  disputeId             String?
   userId                String
   amountUsd             Decimal       @db.Decimal(10, 2)
   status                PaymentStatus @default(pending)
   stripePaymentIntentId String?       @unique
+  stripeSessionId       String?       @unique
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 
-  dispute Dispute @relation(fields: [disputeId], references: [id])
-  user    User    @relation(fields: [userId], references: [id])
+  dispute Dispute? @relation(fields: [disputeId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
 
   @@index([disputeId])
   @@index([userId])
