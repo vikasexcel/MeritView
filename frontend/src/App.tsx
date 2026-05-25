@@ -17,6 +17,8 @@ import { CreateDispute } from '@/pages/disputes/CreateDispute'
 import { DisputeDetail } from '@/pages/disputes/DisputeDetail'
 import { BriefWriting } from '@/pages/disputes/BriefWriting'
 import { OpinionPage } from '@/pages/disputes/OpinionPage'
+import { PaymentSuccess } from '@/pages/disputes/PaymentSuccess'
+import { Billing } from '@/pages/settings/Billing'
 
 function App() {
   return (
@@ -36,11 +38,16 @@ function App() {
       <Route path="/invite/:token" element={<InvitationPage />} />
 
       <Route element={<ProtectedRoute />}>
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+      </Route>
+
+      <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
         </Route>
         <Route path="/settings" element={<DashboardLayout />}>
           <Route index element={<div className="p-6 text-muted-foreground text-sm">Settings — coming in Phase 10</div>} />
+          <Route path="billing" element={<Billing />} />
         </Route>
         <Route path="/disputes" element={<DashboardLayout />}>
           <Route index element={<DisputesDashboard />} />
