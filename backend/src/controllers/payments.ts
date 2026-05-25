@@ -27,12 +27,12 @@ export async function createCheckoutSession(req: Request, res: Response) {
     res.status(400).json({ error: 'counterparty name is required' })
     return
   }
-  if (counterpartyEmail.toLowerCase() === req.user!.email.toLowerCase()) {
+  if (counterpartyEmail.toLowerCase() === (req.user!.email as string).toLowerCase()) {
     res.status(400).json({ error: 'counterparty cannot be yourself' })
     return
   }
 
-  const result = await paymentsService.createCheckoutSession(req.user!.id, {
+  const result = await paymentsService.createCheckoutSession(req.user!.id as string, {
     title: title.trim(),
     category,
     summary: summary.trim(),
@@ -45,7 +45,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
 }
 
 export async function getSessionStatus(req: Request, res: Response) {
-  const status = await paymentsService.getSessionStatus(req.params.sessionId, req.user!.id)
+  const status = await paymentsService.getSessionStatus(req.params.sessionId as string, req.user!.id as string)
   if (!status) {
     res.status(404).json({ error: 'not found' })
     return
@@ -54,7 +54,7 @@ export async function getSessionStatus(req: Request, res: Response) {
 }
 
 export async function listPayments(req: Request, res: Response) {
-  const payments = await paymentsService.listPayments(req.user!.id)
+  const payments = await paymentsService.listPayments(req.user!.id as string)
   res.json({ payments })
 }
 
