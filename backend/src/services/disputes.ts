@@ -2,6 +2,7 @@ import { prisma } from '../lib/prisma'
 import { DisputeCategory } from '@prisma/client'
 import crypto from 'crypto'
 import { createRefund } from './payments'
+import { sendCounterpartyAcceptedEmail } from '../lib/email'
 
 export interface CreateDisputeInput {
   title: string
@@ -119,6 +120,20 @@ export async function acceptInvitation(token: string, userId: string) {
       },
     }),
   ])
+
+  const disputeForEmail = await prisma.dispute.findUnique({
+    where: { id: party.disputeId },
+    include: { initiator: { select: { email: true, name: true } } },
+  })
+  if (disputeForEmail?.initiator) {
+    const appUrl = process.env.APP_URL || 'http://localhost:5173'
+    sendCounterpartyAcceptedEmail(
+      disputeForEmail.initiator.email,
+      disputeForEmail.initiator.name ?? 'there',
+      disputeForEmail.title,
+      `${appUrl}/disputes/${disputeForEmail.id}`
+    ).catch((err) => console.error('[acceptInvitation] Failed to send counterparty accepted email:', err))
+  }
 
   const updatedParty = await prisma.party.findUnique({ where: { invitationToken: token } })
   return { party: updatedParty! }

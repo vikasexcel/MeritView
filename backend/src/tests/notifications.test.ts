@@ -82,3 +82,37 @@ describe('POST /v1/disputes — email notifications', () => {
     expect(url).toContain(res.body.invitationToken)
   })
 })
+
+describe('POST /v1/invitations/:token/accept — email notification', () => {
+  it('calls sendCounterpartyAcceptedEmail with initiator email when counterparty accepts', async () => {
+    vi.clearAllMocks()
+
+    // Create initiator + dispute
+    const initiatorCookie = await registerAndLogin('notif-initiator@test.meritview')
+    const createRes = await request(app)
+      .post('/v1/disputes')
+      .set('Cookie', initiatorCookie)
+      .send({
+        title: 'Accept Notification Dispute',
+        category: 'contract',
+        summary: 'Summary for accept notification test.',
+        counterpartyEmail: 'respondent@example.com',
+        counterpartyName: 'Respondent',
+      })
+    expect(createRes.status).toBe(201)
+    const { invitationToken } = createRes.body
+
+    vi.clearAllMocks()
+
+    // Register respondent and accept
+    const respondentCookie = await registerAndLogin('notif-respondent@test.meritview')
+    const acceptRes = await request(app)
+      .post(`/v1/invitations/${invitationToken}/accept`)
+      .set('Cookie', respondentCookie)
+
+    expect(acceptRes.status).toBe(200)
+    expect(emailLib.sendCounterpartyAcceptedEmail).toHaveBeenCalledOnce()
+    const [to] = (emailLib.sendCounterpartyAcceptedEmail as ReturnType<typeof vi.fn>).mock.calls[0]
+    expect(to).toBe('notif-initiator@test.meritview')
+  })
+})
