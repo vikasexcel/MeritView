@@ -15,6 +15,7 @@ vi.mock('../lib/email', () => ({
 }))
 
 import * as emailLib from '../lib/email'
+import { submitBrief } from '../services/briefs'
 
 const AUTH_BASE = '/api/auth'
 
@@ -114,5 +115,59 @@ describe('POST /v1/invitations/:token/accept — email notification', () => {
     expect(emailLib.sendCounterpartyAcceptedEmail).toHaveBeenCalledOnce()
     const [to] = (emailLib.sendCounterpartyAcceptedEmail as ReturnType<typeof vi.fn>).mock.calls[0]
     expect(to).toBe('notif-initiator@test.meritview')
+  })
+})
+
+describe('submitBrief — analysis started email', () => {
+  it('calls sendAnalysisStartedEmail for both parties when both briefs submitted', async () => {
+    vi.clearAllMocks()
+
+    // Create two users
+    const initiatorEmail = 'notif-brief-a@test.meritview'
+    const respondentEmail = 'notif-brief-b@test.meritview'
+    await request(app).post(`${AUTH_BASE}/sign-up/email`).send({ email: initiatorEmail, password: 'Password123!', name: 'Party A' })
+    await request(app).post(`${AUTH_BASE}/sign-up/email`).send({ email: respondentEmail, password: 'Password123!', name: 'Party B' })
+
+    const userA = await prisma.user.findUnique({ where: { email: initiatorEmail } })
+    const userB = await prisma.user.findUnique({ where: { email: respondentEmail } })
+    expect(userA).toBeTruthy()
+    expect(userB).toBeTruthy()
+
+    // Create dispute with two parties directly in DB
+    const dispute = await prisma.dispute.create({
+      data: {
+        title: 'Analysis Email Dispute',
+        category: 'contract',
+        summary: 'Summary for analysis email test.',
+        state: 'in_progress',
+        initiatorId: userA!.id,
+        parties: {
+          create: [
+            { userId: userA!.id, role: 'initiator', invitationStatus: 'accepted' },
+            { userId: userB!.id, role: 'respondent', invitationStatus: 'accepted' },
+          ],
+        },
+      },
+      include: { parties: true },
+    })
+
+    const [partyA, partyB] = dispute.parties
+    const briefContent = { facts: 'Some facts here', position: 'My position', desiredOutcome: 'Resolution' }
+
+    // Submit brief for party A (should not trigger email yet)
+    await submitBrief(partyA.id, dispute.id, briefContent)
+    expect(emailLib.sendAnalysisStartedEmail).not.toHaveBeenCalled()
+
+    // Submit brief for party B (should trigger analysis started for both)
+    await submitBrief(partyB.id, dispute.id, briefContent)
+
+    // Give fire-and-forget a tick to settle
+    await new Promise((r) => setTimeout(r, 50))
+
+    expect(emailLib.sendAnalysisStartedEmail).toHaveBeenCalledTimes(2)
+    const calls = (emailLib.sendAnalysisStartedEmail as ReturnType<typeof vi.fn>).mock.calls
+    const toAddresses = calls.map((c: unknown[]) => c[0])
+    expect(toAddresses).toContain(initiatorEmail)
+    expect(toAddresses).toContain(respondentEmail)
   })
 })

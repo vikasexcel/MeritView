@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma'
+import { sendAnalysisStartedEmail } from '../lib/email'
 
 export interface BriefContent {
   facts?: string
@@ -90,7 +91,10 @@ export async function submitBrief(partyId: string, disputeId: string, content: B
   })
 
   // Check if both parties have submitted — if so, trigger evaluation
-  const allParties = await prisma.party.findMany({ where: { disputeId } })
+  const allParties = await prisma.party.findMany({
+    where: { disputeId },
+    include: { user: { select: { email: true, name: true } } },
+  })
   const allSubmitted = allParties.every((p) => p.briefStatus === 'submitted')
 
   if (allSubmitted) {
@@ -106,6 +110,15 @@ export async function submitBrief(partyId: string, disputeId: string, content: B
         eventData: { triggeredBy: 'both_briefs_submitted' },
       },
     })
+    const disputeForEmail = await prisma.dispute.findUnique({ where: { id: disputeId }, select: { title: true } })
+    if (disputeForEmail) {
+      for (const p of allParties) {
+        if (p.user) {
+          sendAnalysisStartedEmail(p.user.email, p.user.name ?? 'there', disputeForEmail.title)
+            .catch((err) => console.error('[submitBrief] Failed to send analysis started email:', err))
+        }
+      }
+    }
     // Fire evaluation asynchronously — do not await so HTTP response is not delayed
     console.log(`[briefs] both submitted, triggering evaluation for dispute ${disputeId}`)
     import('../services/evaluation').then(({ triggerEvaluation }) =>
