@@ -112,3 +112,30 @@ export async function sendDisputeConfirmationEmail(
     console.error('[Nodemailer] Failed to send dispute confirmation email:', error)
   }
 }
+
+export async function sendCounterpartyAcceptedEmail(
+  to: string,
+  name: string,
+  disputeTitle: string,
+  disputeUrl: string
+) {
+  try {
+    await transporter.sendMail({
+      from: FROM,
+      to,
+      subject: `The other party has accepted your dispute invitation on ${APP_NAME}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+          <h2 style="color:#1a1a1a">Invitation accepted</h2>
+          <p style="color:#444">Hi ${name},</p>
+          <p style="color:#444">The other party has accepted your invitation to resolve <strong>${disputeTitle}</strong>. Your dispute is now in progress — both parties can now submit their briefs.</p>
+          <a href="${disputeUrl}" style="display:inline-block;padding:12px 24px;background:#1a1a1a;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;margin:16px 0">
+            View Dispute
+          </a>
+        </div>
+      `,
+    })
+  } catch (error) {
+    console.error('[Nodemailer] Failed to send counterparty accepted email:', error)
+  }
+}

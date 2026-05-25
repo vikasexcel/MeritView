@@ -14,6 +14,7 @@ import {
   sendPasswordResetEmail,
   sendInvitationEmail,
   sendDisputeConfirmationEmail,
+  sendCounterpartyAcceptedEmail,
 } from '../lib/email'
 
 const mockSendMail = (nodemailer as unknown as { createTransport: () => { sendMail: ReturnType<typeof vi.fn> } })
@@ -193,6 +194,61 @@ describe('sendDisputeConfirmationEmail', () => {
 
     await expect(
       sendDisputeConfirmationEmail(
+        'fail@example.com',
+        'Alice',
+        'Dispute',
+        'https://example.com/disputes/fail'
+      )
+    ).resolves.not.toThrow()
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Nodemailer'), expect.anything())
+
+    consoleSpy.mockRestore()
+  })
+})
+
+describe('sendCounterpartyAcceptedEmail', () => {
+  beforeEach(() => mockSendMail.mockClear())
+
+  it('calls sendMail with correct to address and subject', async () => {
+    await sendCounterpartyAcceptedEmail(
+      'alice@example.com',
+      'Alice',
+      'Contract Dispute',
+      'https://app.meritview.com/disputes/d1'
+    )
+
+    expect(mockSendMail).toHaveBeenCalledOnce()
+    const call = mockSendMail.mock.calls[0][0]
+    expect(call.to).toBe('alice@example.com')
+    expect(call.subject).toMatch(/accepted/i)
+  })
+
+  it('includes the dispute URL in the HTML body', async () => {
+    const url = 'https://app.meritview.com/disputes/d1'
+    await sendCounterpartyAcceptedEmail('alice@example.com', 'Alice', 'Contract Dispute', url)
+
+    const call = mockSendMail.mock.calls[0][0]
+    expect(call.html).toContain(url)
+  })
+
+  it('sends a from address', async () => {
+    await sendCounterpartyAcceptedEmail(
+      'alice@example.com',
+      'Alice',
+      'Contract Dispute',
+      'https://app.meritview.com/disputes/d1'
+    )
+
+    const call = mockSendMail.mock.calls[0][0]
+    expect(call.from).toBeTruthy()
+  })
+
+  it('logs error and does not throw when sendMail throws', async () => {
+    mockSendMail.mockRejectedValueOnce(new Error('SMTP error'))
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await expect(
+      sendCounterpartyAcceptedEmail(
         'fail@example.com',
         'Alice',
         'Dispute',
