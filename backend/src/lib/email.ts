@@ -85,3 +85,30 @@ export async function sendInvitationEmail(
     console.error('[Nodemailer] Failed to send invitation email:', error)
   }
 }
+
+export async function sendDisputeConfirmationEmail(
+  to: string,
+  name: string,
+  disputeTitle: string,
+  disputeUrl: string
+) {
+  try {
+    await transporter.sendMail({
+      from: FROM,
+      to,
+      subject: `Your dispute has been filed on ${APP_NAME}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+          <h2 style="color:#1a1a1a">Dispute filed</h2>
+          <p style="color:#444">Hi ${name},</p>
+          <p style="color:#444">Your dispute <strong>${disputeTitle}</strong> has been filed on ${APP_NAME}. We've sent an invitation to the other party — you'll be notified when they respond.</p>
+          <a href="${disputeUrl}" style="display:inline-block;padding:12px 24px;background:#1a1a1a;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;margin:16px 0">
+            View Dispute
+          </a>
+        </div>
+      `,
+    })
+  } catch (error) {
+    console.error('[Nodemailer] Failed to send dispute confirmation email:', error)
+  }
+}

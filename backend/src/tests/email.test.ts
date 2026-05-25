@@ -9,7 +9,12 @@ vi.mock('nodemailer', () => {
   }
 })
 
-import { sendVerificationEmail, sendPasswordResetEmail, sendInvitationEmail } from '../lib/email'
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendInvitationEmail,
+  sendDisputeConfirmationEmail,
+} from '../lib/email'
 
 const mockSendMail = (nodemailer as unknown as { createTransport: () => { sendMail: ReturnType<typeof vi.fn> } })
   .createTransport().sendMail
@@ -137,6 +142,61 @@ describe('sendInvitationEmail', () => {
         'Bob',
         'Dispute',
         'https://example.com/invite/fail'
+      )
+    ).resolves.not.toThrow()
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Nodemailer'), expect.anything())
+
+    consoleSpy.mockRestore()
+  })
+})
+
+describe('sendDisputeConfirmationEmail', () => {
+  beforeEach(() => mockSendMail.mockClear())
+
+  it('calls sendMail with correct to address and subject', async () => {
+    await sendDisputeConfirmationEmail(
+      'alice@example.com',
+      'Alice',
+      'Contract Dispute',
+      'https://app.meritview.com/disputes/d1'
+    )
+
+    expect(mockSendMail).toHaveBeenCalledOnce()
+    const call = mockSendMail.mock.calls[0][0]
+    expect(call.to).toBe('alice@example.com')
+    expect(call.subject).toMatch(/dispute/i)
+  })
+
+  it('includes the dispute URL in the HTML body', async () => {
+    const url = 'https://app.meritview.com/disputes/d1'
+    await sendDisputeConfirmationEmail('alice@example.com', 'Alice', 'Contract Dispute', url)
+
+    const call = mockSendMail.mock.calls[0][0]
+    expect(call.html).toContain(url)
+  })
+
+  it('sends a from address', async () => {
+    await sendDisputeConfirmationEmail(
+      'alice@example.com',
+      'Alice',
+      'Contract Dispute',
+      'https://app.meritview.com/disputes/d1'
+    )
+
+    const call = mockSendMail.mock.calls[0][0]
+    expect(call.from).toBeTruthy()
+  })
+
+  it('logs error and does not throw when sendMail throws', async () => {
+    mockSendMail.mockRejectedValueOnce(new Error('SMTP error'))
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await expect(
+      sendDisputeConfirmationEmail(
+        'fail@example.com',
+        'Alice',
+        'Dispute',
+        'https://example.com/disputes/fail'
       )
     ).resolves.not.toThrow()
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Nodemailer'), expect.anything())
