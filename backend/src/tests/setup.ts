@@ -26,7 +26,7 @@ async function cleanTestData() {
     )
   `
   await prisma.$executeRaw`
-    UPDATE "AuditEvent" SET "actorId" = NULL WHERE "actorId" IN (
+    DELETE FROM "AuditEvent" WHERE "actorId" IN (
       SELECT id FROM "User" WHERE email LIKE '%@test.meritview'
     )
   `
