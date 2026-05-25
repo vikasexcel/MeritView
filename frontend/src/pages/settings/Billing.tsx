@@ -12,7 +12,7 @@ const STATUS_VARIANT: Record<PaymentRecord['status'], 'secondary' | 'default' | 
 }
 
 export function Billing() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['payments'],
     queryFn: () => paymentApi.listPayments(),
   })
@@ -28,6 +28,7 @@ export function Billing() {
         </CardHeader>
         <CardContent>
           {isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
+          {isError && <p className="text-sm text-destructive">Failed to load billing history.</p>}
 
           {!isLoading && payments.length === 0 && (
             <p className="text-sm text-muted-foreground py-4 text-center">No payments yet.</p>

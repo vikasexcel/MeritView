@@ -16,7 +16,9 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+if (!stripePublishableKey) throw new Error('VITE_STRIPE_PUBLISHABLE_KEY is not set')
+const stripePromise = loadStripe(stripePublishableKey)
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -32,7 +34,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
   )
 }
 
-function PaymentForm({ onBack }: { onBack: () => void }) {
+function PaymentForm({ onBack, paymentId }: { onBack: () => void; paymentId: string }) {
   const stripe = useStripe()
   const elements = useElements()
   const [error, setError] = useState('')
@@ -47,7 +49,9 @@ function PaymentForm({ onBack }: { onBack: () => void }) {
 
     const { error: submitError } = await stripe.confirmPayment({
       elements,
-      confirmParams: {},
+      confirmParams: {
+        return_url: `${window.location.origin}/payment/success?session_id=${paymentId}`,
+      },
       redirect: 'always',
     })
 
@@ -77,6 +81,7 @@ export function CreateDispute() {
   const { step, values, updateValues, nextStep, prevStep, toPayload } = useDisputeForm()
   const [error, setError] = useState('')
   const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [paymentId, setPaymentId] = useState<string | null>(null)
   const [loadingSession, setLoadingSession] = useState(false)
 
   async function handleProceedToPayment() {
@@ -85,6 +90,7 @@ export function CreateDispute() {
     try {
       const res = await paymentApi.createCheckoutSession(toPayload())
       setClientSecret(res.data.clientSecret)
+      setPaymentId(res.data.paymentId)
     } catch (err: any) {
       setError(err?.response?.data?.error ?? 'Something went wrong. Please try again.')
     } finally {
@@ -263,7 +269,10 @@ export function CreateDispute() {
                 stripe={stripePromise}
                 options={{ clientSecret, appearance: { theme: 'stripe' } }}
               >
-                <PaymentForm onBack={() => setClientSecret(null)} />
+                <PaymentForm
+                  paymentId={paymentId!}
+                  onBack={() => { setClientSecret(null); setPaymentId(null) }}
+                />
               </Elements>
             )}
           </CardContent>
