@@ -5,6 +5,16 @@ import crypto from 'crypto'
 import { sendInvitationEmail } from '../lib/email'
 
 const STANDARD_AMOUNT_CENTS = parseInt(process.env.STRIPE_PRICE_STANDARD_CENTS ?? '9900', 10)
+if (!Number.isFinite(STANDARD_AMOUNT_CENTS) || STANDARD_AMOUNT_CENTS <= 0) {
+  throw new Error('STRIPE_PRICE_STANDARD_CENTS must be a positive integer')
+}
+
+export class WebhookSignatureError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'WebhookSignatureError'
+  }
+}
 
 export interface CheckoutFormData {
   title: string
@@ -65,7 +75,13 @@ export async function getSessionStatus(sessionId: string, userId: string) {
 
 export async function handleWebhookEvent(rawBody: Buffer, signature: string) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
-  const event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let event: any
+  try {
+    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
+  } catch (err: any) {
+    throw new WebhookSignatureError(err.message)
+  }
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as any
@@ -73,7 +89,7 @@ export async function handleWebhookEvent(rawBody: Buffer, signature: string) {
   } else if (event.type === 'checkout.session.expired') {
     const session = event.data.object as any
     await prisma.payment.updateMany({
-      where: { stripeSessionId: session.id },
+      where: { stripeSessionId: session.id, status: 'pending' },
       data: { status: 'failed' },
     })
   }

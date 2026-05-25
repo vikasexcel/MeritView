@@ -34,7 +34,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
   )
 }
 
-function PaymentForm({ onBack, paymentId }: { onBack: () => void; paymentId: string }) {
+function PaymentForm({ onBack }: { onBack: () => void }) {
   const stripe = useStripe()
   const elements = useElements()
   const [error, setError] = useState('')
@@ -49,9 +49,7 @@ function PaymentForm({ onBack, paymentId }: { onBack: () => void; paymentId: str
 
     const { error: submitError } = await stripe.confirmPayment({
       elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/payment/success?session_id=${paymentId}`,
-      },
+      confirmParams: {},
       redirect: 'always',
     })
 
@@ -81,7 +79,6 @@ export function CreateDispute() {
   const { step, values, updateValues, nextStep, prevStep, toPayload } = useDisputeForm()
   const [error, setError] = useState('')
   const [clientSecret, setClientSecret] = useState<string | null>(null)
-  const [paymentId, setPaymentId] = useState<string | null>(null)
   const [loadingSession, setLoadingSession] = useState(false)
 
   async function handleProceedToPayment() {
@@ -90,7 +87,6 @@ export function CreateDispute() {
     try {
       const res = await paymentApi.createCheckoutSession(toPayload())
       setClientSecret(res.data.clientSecret)
-      setPaymentId(res.data.paymentId)
     } catch (err: any) {
       setError(err?.response?.data?.error ?? 'Something went wrong. Please try again.')
     } finally {
@@ -270,8 +266,7 @@ export function CreateDispute() {
                 options={{ clientSecret, appearance: { theme: 'stripe' } }}
               >
                 <PaymentForm
-                  paymentId={paymentId!}
-                  onBack={() => { setClientSecret(null); setPaymentId(null) }}
+                  onBack={() => setClientSecret(null)}
                 />
               </Elements>
             )}

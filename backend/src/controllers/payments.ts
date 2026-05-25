@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import * as paymentsService from '../services/payments'
+import { WebhookSignatureError } from '../services/payments'
 import { DisputeCategory } from '@prisma/client'
 
 const VALID_CATEGORIES: DisputeCategory[] = ['contract', 'small_claims', 'partnership']
@@ -73,7 +74,13 @@ export async function handleWebhook(req: Request, res: Response) {
     await paymentsService.handleWebhookEvent(req.body as Buffer, signature)
     res.json({ received: true })
   } catch (err: any) {
-    console.error('[webhook] Error:', err.message)
-    res.status(400).json({ error: err.message })
+    if (err instanceof WebhookSignatureError) {
+      // 400 = don't retry
+      res.status(400).json({ error: err.message })
+    } else {
+      // 500 = retry (transient DB error etc.)
+      console.error('[webhook] Processing error:', err)
+      res.status(500).json({ error: 'Internal error processing webhook' })
+    }
   }
 }
