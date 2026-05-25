@@ -14,6 +14,40 @@ vi.mock('../lib/email', () => ({
   sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock('../lib/evaluator', () => ({
+  EVALUATOR_COUNT: 1,
+  runEvaluators: vi.fn().mockResolvedValue([
+    {
+      provider: 'mock',
+      tokensUsed: 0,
+      output: {
+        partyAScore: 7,
+        partyBScore: 5,
+        partyAStrengths: ['clear'],
+        partyAWeaknesses: ['brief'],
+        partyBStrengths: ['concise'],
+        partyBWeaknesses: ['vague'],
+        partyASuggestedConsiderations: [],
+        partyBSuggestedConsiderations: [],
+        reasoning: 'mock',
+      },
+    },
+  ]),
+}))
+
+vi.mock('../lib/aggregator', () => ({
+  aggregateResults: vi.fn().mockResolvedValue({
+    partyAPoints: 5,
+    partyBPoints: 3,
+    overallWinner: 'Party A',
+    confidenceScore: 80,
+    aggregatorAgreement: 0.9,
+    narrative: 'Mock narrative',
+    partyAAnalysis: { strengths: ['clear'], weaknesses: [], suggestedConsiderations: [] },
+    partyBAnalysis: { strengths: [], weaknesses: ['vague'], suggestedConsiderations: [] },
+  }),
+}))
+
 import * as emailLib from '../lib/email'
 import { submitBrief } from '../services/briefs'
 import { triggerEvaluation } from '../services/evaluation'
@@ -177,41 +211,6 @@ describe('triggerEvaluation — opinion ready email', () => {
   it('calls sendOpinionReadyEmail for both parties after opinion is saved', async () => {
     vi.clearAllMocks()
 
-    // Mock the evaluator and aggregator to avoid real LLM calls
-    vi.mock('../lib/evaluator', () => ({
-      EVALUATOR_COUNT: 1,
-      runEvaluators: vi.fn().mockResolvedValue([
-        {
-          provider: 'mock',
-          tokensUsed: 0,
-          output: {
-            partyAScore: 7,
-            partyBScore: 5,
-            partyAStrengths: ['clear'],
-            partyAWeaknesses: ['brief'],
-            partyBStrengths: ['concise'],
-            partyBWeaknesses: ['vague'],
-            partyASuggestedConsiderations: [],
-            partyBSuggestedConsiderations: [],
-            reasoning: 'mock',
-          },
-        },
-      ]),
-    }))
-
-    vi.mock('../lib/aggregator', () => ({
-      aggregateResults: vi.fn().mockResolvedValue({
-        partyAPoints: 5,
-        partyBPoints: 3,
-        overallWinner: 'Party A',
-        confidenceScore: 80,
-        aggregatorAgreement: 0.9,
-        narrative: 'Mock narrative',
-        partyAAnalysis: { strengths: ['clear'], weaknesses: [], suggestedConsiderations: [] },
-        partyBAnalysis: { strengths: [], weaknesses: ['vague'], suggestedConsiderations: [] },
-      }),
-    }))
-
     // Create two users and a dispute with submitted briefs
     const userAEmail = 'notif-eval-a@test.meritview'
     const userBEmail = 'notif-eval-b@test.meritview'
@@ -247,15 +246,15 @@ describe('triggerEvaluation — opinion ready email', () => {
       })
     }
 
+    vi.clearAllMocks()
     await triggerEvaluation(dispute.id)
 
     // Give fire-and-forget a tick to settle
     await new Promise((r) => setTimeout(r, 100))
 
+    expect(emailLib.sendOpinionReadyEmail).toHaveBeenCalledTimes(2)
     const calls = (emailLib.sendOpinionReadyEmail as ReturnType<typeof vi.fn>).mock.calls
     const toAddresses = calls.map((c: unknown[]) => c[0])
-    // At least 2 calls; previous test's background eval may also fire emails
-    expect(calls.length).toBeGreaterThanOrEqual(2)
     expect(toAddresses).toContain(userAEmail)
     expect(toAddresses).toContain(userBEmail)
   })
