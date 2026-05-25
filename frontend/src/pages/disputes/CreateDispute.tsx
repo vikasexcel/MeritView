@@ -1,8 +1,7 @@
-// frontend/src/pages/disputes/CreateDispute.tsx
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useMutation } from '@tanstack/react-query'
-import { disputeApi } from '@/lib/disputeApi'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { paymentApi } from '@/lib/paymentApi'
 import { useDisputeForm } from '@/hooks/useDisputeForm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -31,26 +32,64 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
   )
 }
 
+function PaymentForm({ onBack }: { onBack: () => void }) {
+  const stripe = useStripe()
+  const elements = useElements()
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!stripe || !elements) return
+
+    setLoading(true)
+    setError('')
+
+    const { error: submitError } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {},
+      redirect: 'always',
+    })
+
+    if (submitError) {
+      setError(submitError.message ?? 'Payment failed. Please try again.')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <PaymentElement />
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <div className="flex justify-between pt-2">
+        <Button type="button" variant="outline" onClick={onBack} disabled={loading}>
+          Back
+        </Button>
+        <Button type="submit" disabled={!stripe || loading}>
+          {loading ? 'Processing...' : 'Pay $99.00'}
+        </Button>
+      </div>
+    </form>
+  )
+}
+
 export function CreateDispute() {
-  const navigate = useNavigate()
   const { step, values, updateValues, nextStep, prevStep, toPayload } = useDisputeForm()
   const [error, setError] = useState('')
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [loadingSession, setLoadingSession] = useState(false)
 
-  const mutation = useMutation({
-    mutationFn: () => disputeApi.create(toPayload()),
-    onSuccess: (res) => {
-      navigate(`/disputes/${res.data.dispute.id}`, {
-        state: { inviteUrl: res.data.inviteUrl },
-      })
-    },
-    onError: (err: any) => {
-      setError(err?.response?.data?.error ?? 'Something went wrong. Please try again.')
-    },
-  })
-
-  function handleSubmit() {
+  async function handleProceedToPayment() {
     setError('')
-    mutation.mutate()
+    setLoadingSession(true)
+    try {
+      const res = await paymentApi.createCheckoutSession(toPayload())
+      setClientSecret(res.data.clientSecret)
+    } catch (err: any) {
+      setError(err?.response?.data?.error ?? 'Something went wrong. Please try again.')
+    } finally {
+      setLoadingSession(false)
+    }
   }
 
   return (
@@ -133,10 +172,7 @@ export function CreateDispute() {
             </div>
             <div className="flex justify-between">
               <Button variant="outline" onClick={prevStep}>Back</Button>
-              <Button
-                onClick={nextStep}
-                disabled={values.summary.trim().length < 10}
-              >
+              <Button onClick={nextStep} disabled={values.summary.trim().length < 10}>
                 Next
               </Button>
             </div>
@@ -189,11 +225,12 @@ export function CreateDispute() {
       {step === 4 && (
         <Card>
           <CardHeader>
-            <CardTitle>Review & Submit</CardTitle>
-            <CardDescription>Confirm your dispute details before submitting.</CardDescription>
+            <CardTitle>Payment</CardTitle>
+            <CardDescription>Complete payment to submit your dispute.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <dl className="space-y-2 text-sm">
+            {/* Summary */}
+            <dl className="space-y-2 text-sm bg-muted/40 rounded-md p-3">
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Title</dt>
                 <dd className="font-medium">{values.title}</dd>
@@ -203,23 +240,32 @@ export function CreateDispute() {
                 <dd className="capitalize">{values.category.replace('_', ' ')}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Stakes</dt>
-                <dd>{values.stakes ? `$${Number(values.stakes).toLocaleString()}` : '—'}</dd>
-              </div>
-              <div className="flex justify-between">
                 <dt className="text-muted-foreground">Counterparty</dt>
-                <dd>{values.counterpartyName} ({values.counterpartyEmail})</dd>
+                <dd>{values.counterpartyName}</dd>
+              </div>
+              <div className="flex justify-between border-t pt-2 mt-2">
+                <dt className="font-medium">Standard Analysis</dt>
+                <dd className="font-semibold">$99.00</dd>
               </div>
             </dl>
 
             {error && <p className="text-sm text-destructive">{error}</p>}
 
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={prevStep}>Back</Button>
-              <Button onClick={handleSubmit} disabled={mutation.isPending}>
-                {mutation.isPending ? 'Submitting...' : 'Create Dispute'}
-              </Button>
-            </div>
+            {!clientSecret ? (
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={prevStep}>Back</Button>
+                <Button onClick={handleProceedToPayment} disabled={loadingSession}>
+                  {loadingSession ? 'Loading...' : 'Proceed to Payment'}
+                </Button>
+              </div>
+            ) : (
+              <Elements
+                stripe={stripePromise}
+                options={{ clientSecret, appearance: { theme: 'stripe' } }}
+              >
+                <PaymentForm onBack={() => setClientSecret(null)} />
+              </Elements>
+            )}
           </CardContent>
         </Card>
       )}
