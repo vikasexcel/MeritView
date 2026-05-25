@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { DisputeCategory } from '@prisma/client'
 import * as disputeService from '../services/disputes'
-import { sendInvitationEmail } from '../lib/email'
+import { sendInvitationEmail, sendDisputeConfirmationEmail } from '../lib/email'
 
 const VALID_CATEGORIES: DisputeCategory[] = ['contract', 'small_claims', 'partnership']
 
@@ -49,6 +49,15 @@ export async function createDispute(req: Request, res: Response) {
 
   sendInvitationEmail(counterpartyEmail, counterpartyName, dispute.title, inviteUrl).catch((err) => {
     console.error('[createDispute] Failed to send invitation email:', err)
+  })
+
+  sendDisputeConfirmationEmail(
+    req.user!.email,
+    req.user!.name ?? 'there',
+    dispute.title,
+    `${appUrl}/disputes/${dispute.id}`
+  ).catch((err) => {
+    console.error('[createDispute] Failed to send confirmation email:', err)
   })
 
   res.status(201).json({ dispute, invitationToken, inviteUrl })
