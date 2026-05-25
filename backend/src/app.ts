@@ -10,6 +10,8 @@ import disputesRouter from './routes/disputes'
 import invitationsRouter from './routes/invitations'
 import briefsRouter from './routes/briefs'
 import opinionsRouter from './routes/opinions'
+import paymentsRouter from './routes/payments'
+import { handleWebhook } from './controllers/payments'
 import { auth } from './lib/auth'
 
 const app = express()
@@ -20,6 +22,9 @@ app.use(corsMiddleware)
 // Better Auth handler must come BEFORE express.json()
 app.all('/api/auth/{*any}', toNodeHandler(auth))
 
+// Stripe webhook must receive raw body — register BEFORE express.json()
+app.post('/v1/webhooks/stripe', express.raw({ type: 'application/json' }), handleWebhook)
+
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use(rateLimiter)
@@ -29,6 +34,7 @@ app.use('/v1/disputes', disputesRouter)
 app.use('/v1/disputes/:id/parties/:partyId/brief', briefsRouter)
 app.use('/v1/disputes/:id/opinion', opinionsRouter)
 app.use('/v1/invitations', invitationsRouter)
+app.use('/v1/payments', paymentsRouter)
 
 app.use(errorHandler)
 
