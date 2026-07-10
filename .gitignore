@@ -8,3 +8,6 @@ Requirements/
 .claude/
 .env
 .worktrees/
+.json
+CLAUDE.md
+.agents/
