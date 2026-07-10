@@ -4,9 +4,6 @@ MeritView is a dispute-resolution web app that gives two parties in a disagreeme
 
 Each side privately writes a structured brief (facts, position, arguments, acknowledgment of the other side, desired outcome), optionally with the help of an AI writing assistant. Once both briefs are submitted, a panel of independent LLM judges (Claude, GPT-4, and Gemini, via OpenRouter) scores each side, and the results are aggregated into a single opinion: a point-based verdict, an inter-judge agreement score, and a neutral narrative summary — all clearly framed as argument analysis, not legal advice.
 
-> [!NOTE]
-> This is an MVP under active development. See [Project status](#project-status) for what is and isn't finished yet.
-
 ## How it works
 
 1. **Create a dispute** — the initiator describes the case (title, category, summary, stakes) and pays for analysis via Stripe Checkout.
@@ -179,15 +176,3 @@ Once both briefs are submitted, evaluation starts automatically. The opinion pag
 
 The dashboard lists all of a user's disputes with their current status (draft, awaiting counterparty, in progress, under analysis, completed, cancelled, or refunded). Payment history is available under **Settings → Billing**.
 
-## Project status
-
-The core product loop is functionally complete: authentication, paid dispute creation, invitations, brief writing with AI assistance, the three-judge AI evaluation engine, opinion delivery, and transactional email are all implemented and tested.
-
-Not yet implemented:
-
-- Account/profile settings (password change, account deletion, privacy settings)
-- PDF export of the opinion, and the "Request re-analysis" upsell
-- Google OAuth and guest/invitation-only sign-in
-- General mobile responsiveness and error-state polish
-
-See `docs/MVP_TODO.md` for the full, up-to-date task breakdown.
